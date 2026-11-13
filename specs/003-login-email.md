@@ -1,6 +1,6 @@
 # 003 — Login con email
 
-- **Estado:** aprobado
+- **Estado:** implementado (código); falta verificar el flujo real con Supabase y Vercel
 - **Fecha:** 2026-11-13
 
 ## Objetivo
@@ -49,10 +49,10 @@ Sin tablas nuevas: se usa Supabase Auth. Las políticas del spec 002 ya filtran 
 - [ ] Se puede iniciar sesión, recargar la página y seguir con la sesión abierta.
 - [ ] Cerrar sesión devuelve a la pantalla de acceso y limpia el estado.
 - [ ] "Olvidé mi contraseña" envía el correo y permite fijar una nueva.
-- [ ] Los errores se muestran en español y sin exponer detalles técnicos.
-- [ ] Los formularios son usables a 360 px (campos >= 16 px de fuente, botones >= 44 px).
-- [ ] No se guardan contraseñas ni tokens fuera del almacenamiento que gestiona Supabase.
-- [ ] `npm test`, `npm run lint` y `npm run build` pasan.
+- [x] Los errores se muestran en español y sin exponer detalles técnicos.
+- [x] Los formularios son usables a 360 px (campos >= 16 px de fuente, botones >= 44 px).
+- [x] No se guardan contraseñas ni tokens fuera del almacenamiento que gestiona Supabase.
+- [x] `npm test`, `npm run lint` y `npm run build` pasan.
 
 ## Riesgos y preguntas abiertas
 - **Redirects**: si la *Site URL* o las *Redirect URLs* no incluyen la URL de Vercel, los enlaces de confirmación y de recuperación fallan.
