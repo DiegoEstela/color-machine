@@ -1,0 +1,12 @@
+.art {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  min-height: 96px;
+  padding: var(--space-3);
+  color: var(--color-ink);
+  background: var(--color-surface-alt);
+  border: var(--border-w) solid var(--color-line);
+  box-shadow: var(--shadow-pixel);
+}

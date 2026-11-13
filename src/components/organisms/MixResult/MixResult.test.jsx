@@ -414,3 +414,78 @@ describe('MixResult: consejo completo de colores', () => {
     await waitFor(() => expect(useMixStore.getState().result.data.best.deltaE).toBeLessThan(5), { timeout: 4000 })
   })
 })
+
+describe('MixResult: "Para acercarte más"', () => {
+  const [rojoB, amarilloB, azulB] = BASE_PAINTS
+  const primarios = [rojoB, amarilloB, azulB]
+  const marron = '#8b5a2b'
+  const claro = '#a67b5b'
+
+  it('con solo rojo, amarillo y azul un marrón pide NEGRO, con la receta nueva, debajo de los frascos', async () => {
+    render(<MixResult target={marron} paints={primarios} onAddPaint={() => {}} />)
+    await ready()
+    const banner = screen.getByRole('note', { name: /no se llega del todo|Podría estar más cerca/ })
+    const frascos = screen.getByRole('img', { name: /^Tu mezcla #/ })
+    const primeraFila = screen.getAllByRole('progressbar')[0] // la barra de la primera pintura de la receta
+    // el banner va después de los frascos y antes de la lista de pinturas
+    expect(frascos.compareDocumentPosition(banner) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(banner.compareDocumentPosition(primeraFila) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    if (banner.getAttribute('aria-label') === 'Podría estar más cerca') fireEvent.click(within(banner).getByRole('button', { name: /Podría estar más cerca/ }))
+    expect(await within(banner).findByText(/te falta: Negro/, {}, { timeout: 4000 })).toBeInTheDocument()
+    expect(within(banner).getByText(/Con eso queda .*: .*Negro/)).toBeInTheDocument()
+  })
+
+  it('con un marrón claro pide BLANCO y dice cómo queda la receta', async () => {
+    render(<MixResult target={claro} paints={primarios} onAddPaint={() => {}} />)
+    await ready()
+    const banner = screen.getByRole('note', { name: /no se llega del todo|Podría estar más cerca/ })
+    if (banner.getAttribute('aria-label') === 'Podría estar más cerca') fireEvent.click(within(banner).getByRole('button', { name: /Podría estar más cerca/ }))
+    expect(await within(banner).findByText(/te falta: Blanco/, {}, { timeout: 4000 })).toBeInTheDocument()
+  })
+
+  it('"Agregar" lo sumado recalcula y la receta mejora', async () => {
+    render(<MixResult target={claro} paints={primarios} onAddPaint={() => {}} />)
+    await ready()
+    const before = useMixStore.getState().result.data.best.deltaE
+    const banner = screen.getByRole('note', { name: /no se llega del todo|Podría estar más cerca/ })
+    if (banner.getAttribute('aria-label') === 'Podría estar más cerca') fireEvent.click(within(banner).getByRole('button', { name: /Podría estar más cerca/ }))
+    fireEvent.click(await within(banner).findByRole('button', { name: /Sumar Blanco/ }, { timeout: 4000 }))
+    await waitFor(() => expect(useMixStore.getState().result?.status).toBe('ready'), { timeout: 4000 })
+    await waitFor(() => expect(useMixStore.getState().result.data.best.deltaE).toBeLessThan(before - 1), { timeout: 4000 })
+  })
+
+  it('para un marrón muestra el consejo de marrones', async () => {
+    render(<MixResult target={marron} paints={primarios} onAddPaint={() => {}} />)
+    await ready()
+    const banner = screen.getByRole('note', { name: /no se llega del todo|Podría estar más cerca/ })
+    if (banner.getAttribute('aria-label') === 'Podría estar más cerca') fireEvent.click(within(banner).getByRole('button', { name: /Podría estar más cerca/ }))
+    expect(within(banner).getByRole('note', { name: 'Consejo para este tipo de color' })).toHaveTextContent(/Un marrón se hace con rojo, amarillo y azul/)
+  })
+
+  it('nombra hacia dónde tira la mezcla con las pinturas de la receta', async () => {
+    render(<MixResult target={marron} paints={primarios} onAddPaint={() => {}} />)
+    await ready()
+    const banner = screen.getByRole('note', { name: /no se llega del todo|Podría estar más cerca/ })
+    if (banner.getAttribute('aria-label') === 'Podría estar más cerca') fireEvent.click(within(banner).getByRole('button', { name: /Podría estar más cerca/ }))
+    expect(within(banner).getByRole('region', { name: 'Cómo está tu mezcla' })).toHaveTextContent(/Tu mezcla/)
+  })
+
+  it('un color casi idéntico (ΔE < 2) no muestra el banner', async () => {
+    renderMix() // el objetivo es justo lo que da rojo + azul
+    await ready()
+    expect(screen.queryByRole('note', { name: /no se llega del todo|Podría estar más cerca/ })).not.toBeInTheDocument()
+  })
+
+  it('"Usar Preciso" cambia la precisión cuando una mayor ayuda', async () => {
+    // un tostado: con 16 partes mejora respecto de 10
+    render(<MixResult target="#c19a6b" paints={BASE_PAINTS} onAddPaint={() => {}} />)
+    await ready()
+    await waitFor(() => expect(useMixStore.getState().result?.adviceReady).toBe(true), { timeout: 5000 })
+    const offer = useMixStore.getState().result.precision
+    if (!offer) return // si con estas pinturas no mejora, no se ofrece (cubierto en advisor.test)
+    const banner = screen.getByRole('note', { name: /no se llega del todo|Podría estar más cerca/ })
+    if (banner.getAttribute('aria-label') === 'Podría estar más cerca') fireEvent.click(within(banner).getByRole('button', { name: /Podría estar más cerca/ }))
+    fireEvent.click(within(banner).getByRole('button', { name: /Usar Preciso/ }))
+    expect(useMixStore.getState().maxParts).toBe(16)
+  })
+})

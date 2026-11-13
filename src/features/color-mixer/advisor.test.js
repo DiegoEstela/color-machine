@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { adviseBasePaints, describePlan, diagnose, matchPaints, planMissingPaints, suggestAdditions } from './advisor.js'
+import {
+  IMPROVE_DELTA_E, adviceForTone, adviseBasePaints, baseRoleOf, colorFamilyTip, describePlan, diagnose, matchPaints, planMissingPaints,
+  suggestAdditions, suggestPrecision,
+} from './advisor.js'
 import { BASE_PAINTS } from './referencePaints.js'
 import { mixHex } from './mixer.js'
 import { solve } from './solver.js'
@@ -217,5 +220,115 @@ describe('describePlan', () => {
   })
   it('sin plan no hay frase', () => {
     expect(describePlan(null)).toBeNull()
+  })
+})
+
+describe('planMissingPaints con umbral fino (para acercarte más)', () => {
+  const primarios = [rojo, amarillo, azul]
+  const names = (plan) => plan.roles.map((r) => r.name).sort()
+
+  it('con el umbral por defecto no cambia: un marrón a ΔE 5,1 se arregla igual que antes', () => {
+    const plan = planMissingPaints('#8b5a2b', primarios, { maxParts: 10 })
+    expect(plan).not.toBeNull()
+    expect(planMissingPaints('#8b5a2b', primarios, { maxParts: 10, threshold: 5 })).toEqual(plan)
+  })
+
+  it('un marrón oscuro con solo los tres primarios pide NEGRO y la receta nueva queda "Muy parecido"', () => {
+    const plan = planMissingPaints('#8b5a2b', primarios, { maxParts: 10, threshold: IMPROVE_DELTA_E })
+    expect(names(plan)).toEqual(['Negro'])
+    expect(plan.deltaE).toBeLessThan(5)
+    expect(plan.recipe.parts.map((p) => p.name)).toContain('Negro')
+    expect(plan.enough).toBe(true)
+  })
+
+  it('un marrón claro con solo los tres primarios pide BLANCO y queda casi idéntico', () => {
+    const plan = planMissingPaints('#a67b5b', primarios, { maxParts: 10, threshold: IMPROVE_DELTA_E })
+    expect(names(plan)).toEqual(['Blanco'])
+    expect(plan.deltaE).toBeLessThan(2)
+  })
+
+  it('con ΔE entre 2 y 5 ofrece subir de categoría (antes no decía nada)', () => {
+    const target = '#8b5a2b'
+    const rec = solve({ target, paints: [rojo, amarillo, negro], maxParts: 10 }).best // ΔE ≈ 3,3: "Muy parecido"
+    expect(rec.deltaE).toBeGreaterThan(IMPROVE_DELTA_E)
+    expect(rec.deltaE).toBeLessThan(5)
+    expect(planMissingPaints(target, [rojo, amarillo, negro], { maxParts: 10 })).toBeNull() // umbral viejo: no hay plan
+    const plan = planMissingPaints(target, [rojo, amarillo, negro], { maxParts: 10, threshold: IMPROVE_DELTA_E })
+    expect(plan).not.toBeNull()
+    if (plan.roles.length > 0) expect(plan.deltaE).toBeLessThan(rec.deltaE - 0.99)
+  })
+
+  it('si ya es "Casi idéntico" no hay plan', () => {
+    expect(planMissingPaints('#a67b5b', [rojo, amarillo, azul, blanco], { maxParts: 10, threshold: IMPROVE_DELTA_E })).toBeNull()
+  })
+
+  it('si sumar no mejora lo suficiente devuelve roles vacíos (lo más cerca que se llega) y nunca queda mudo', () => {
+    const plan = planMissingPaints('#00d4ff', [rojo, amarillo, azul, blanco, negro], { maxParts: 10, threshold: IMPROVE_DELTA_E })
+    if (plan) expect(plan.roles).toEqual([])
+  })
+})
+
+describe('suggestPrecision', () => {
+  it('si una precisión mayor acerca la receta, la ofrece con el parecido que lograría', () => {
+    const found = ['#7b3f20', '#8b5a2b', '#c19a6b', '#5c3a21'].map((t) => suggestPrecision(t, [rojo, amarillo, azul, blanco, negro], { maxParts: 10 })).filter(Boolean)
+    expect(found.length).toBeGreaterThan(0) // con 16 partes mejoran el tostado, el rojizo y el medio
+    for (const r of found) {
+      expect(r.maxParts).toBe(16)
+      expect(r.recipe.total).toBeLessThanOrEqual(16)
+    }
+  })
+  it('si no mejora, no ofrece nada (por ejemplo el chocolate ya está en su mejor receta)', () => {
+    expect(suggestPrecision('#5c3a21', [rojo, amarillo, azul, blanco, negro], { maxParts: 10 })).toBeNull()
+  })
+  it('en la precisión más alta no hay más para ofrecer', () => {
+    expect(suggestPrecision('#8b5a2b', [rojo, amarillo, azul], { maxParts: 16 })).toBeNull()
+  })
+  it('desde Simple puede saltar a la que sirva (10 o 16), nunca a una menor', () => {
+    const r = suggestPrecision('#8b5a2b', [rojo, amarillo, azul, negro], { maxParts: 6 })
+    if (r) expect([10, 16]).toContain(r.maxParts)
+  })
+})
+
+describe('baseRoleOf y adviceForTone', () => {
+  it('reconoce a qué pintura base se parece una pintura', () => {
+    expect(baseRoleOf('#e63946')).toBe('base-rojo')
+    expect(baseRoleOf('#1a3cb0')).toBe('base-azul')
+    expect(baseRoleOf('#aaaaaa')).not.toBe('base-rojo')
+  })
+  const parts = [{ name: 'Mi rojo', hex: '#e4002b' }, { name: 'Mi amarillo', hex: '#fcd116' }, { name: 'Mi azul', hex: '#1d3fbb' }]
+  it('si tira a azul: menos azul o más amarillo, con los nombres de TUS pinturas', () => {
+    expect(adviceForTone({ tone: 'bluer' }, parts)).toBe('Tira a azul: probá menos Mi azul o más Mi amarillo.')
+  })
+  it('si tira a amarillo: menos amarillo o más azul', () => {
+    expect(adviceForTone({ tone: 'yellower' }, parts)).toBe('Tira a amarillo: probá menos Mi amarillo o más Mi azul.')
+  })
+  it('si tira a rojo: menos rojo o más azul; si tira a verde: menos azul o más rojo', () => {
+    expect(adviceForTone({ tone: 'redder' }, parts)).toMatch(/menos Mi rojo o más Mi azul/)
+    expect(adviceForTone({ tone: 'greener' }, parts)).toMatch(/menos Mi azul o más Mi rojo/)
+  })
+  it('solo nombra pinturas que están en la receta', () => {
+    expect(adviceForTone({ tone: 'bluer' }, [parts[2]])).toBe('Tira a azul: probá menos Mi azul.')
+    expect(adviceForTone({ tone: 'bluer' }, [parts[1]])).toBe('Tira a azul: probá más Mi amarillo.')
+    expect(adviceForTone({ tone: 'bluer' }, [parts[0]])).toBeNull()
+  })
+  it('sin tono no hay consejo', () => {
+    expect(adviceForTone({ tone: 'same' }, parts)).toBeNull()
+    expect(adviceForTone(undefined, parts)).toBeNull()
+  })
+})
+
+describe('colorFamilyTip', () => {
+  it('los marrones (oscuros, medios y claros) reciben el consejo de marrón', () => {
+    for (const brown of ['#8b5a2b', '#5c3a21', '#a67b5b', '#c19a6b', '#7b3f20']) {
+      expect(colorFamilyTip(brown)?.id).toBe('brown')
+    }
+    expect(colorFamilyTip('#8b5a2b').text).toMatch(/rojo, amarillo y azul/)
+  })
+  it('los grises y los muy oscuros reciben el suyo', () => {
+    expect(colorFamilyTip('#808080')?.id).toBe('gray')
+    expect(colorFamilyTip('#1a1020')?.id).toBe('dark')
+  })
+  it('los colores vivos o claros no reciben ninguno', () => {
+    for (const vivid of ['#ff0000', '#ff8c00', '#00b894', '#f4a6b8', '#ffeb3b', '#2a52be']) expect(colorFamilyTip(vivid)).toBeNull()
   })
 })

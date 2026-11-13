@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
-import { PixelButton, PixelIconButton, PixelPanel, PixelText } from '../../atoms/index.js'
+import { PixelButton, PixelIconButton, PixelText } from '../../atoms/index.js'
 import TweakSheet from '../TweakSheet/TweakSheet.jsx'
-import { ColorCompare, InfoSheet, MixingAnimation, OptionGroup, PlanAdvice, RecipeRow, SaveRecipe } from '../../molecules/index.js'
-import { diagnose } from '../../../features/color-mixer/advisor.js'
+import { ColorCompare, ImproveAdvice, InfoSheet, MixingAnimation, OptionGroup, RecipeRow, SaveRecipe } from '../../molecules/index.js'
+import {
+  IMPROVE_DELTA_E, NEEDS_HELP_DELTA_E, adviceForTone, colorFamilyTip, diagnose,
+} from '../../../features/color-mixer/advisor.js'
 import { resultKey, useMixStore } from '../../../features/color-mixer/mixStore.js'
 import { describeQuality, PRECISION } from '../../../features/color-mixer/solver.js'
-import { describeNeeds, describeTweak, isNeutral, shiftTarget } from '../../../features/color-mixer/tweak.js'
+import { describeGap, describeNeeds, describeTweak, isNeutral, shiftTarget } from '../../../features/color-mixer/tweak.js'
 import { ROUTES, navigate } from '../../../features/navigation/useRoute.js'
 import { MAX_SELECTED } from '../../../features/paints/paintsStore.js'
 import { useRecipesStore } from '../../../features/recipes/recipesStore.js'
@@ -191,13 +193,55 @@ export default function MixResult({ target, paints, onAddPaint }) {
 
   const { recommended, best } = current.data
   const shown = active === 'best' ? best : recommended
-  const problems = diagnoseFor(shown)
-  // Con consejo completo (hay colores para sumar) los motivos sobran y hasta se contradicen ("sumá blanco" vs "te falta amarillo"):
-  // el plan es el remedio. Sin plan se muestran los motivos de siempre (el de tono lo explica el plan).
-  const planHasRoles = (current.plan?.roles.length ?? 0) > 0
-  const reasons = planHasRoles ? [] : problems.filter((d) => d.code !== 'need_hue').map((d) => d.message)
+  // "Para acercarte más": desde ΔE 2 (antes solo desde 5). Con ΔE ≥ 5 viene abierto; entre 2 y 5, plegado.
+  const distance = shown.aimDeltaE ?? shown.deltaE
+  const needsHelp = distance >= NEEDS_HELP_DELTA_E
+  const showAdvice = distance >= IMPROVE_DELTA_E
+  const gap = describeGap(aim, shown.mixHex)
+  const toneAdvice = adviceForTone(gap, shown.parts)
+  const tip = colorFamilyTip(target)
+  const precisionOffer = current.precision
+    ? (() => {
+        const option = PRECISIONS.find((p) => p.parts === current.precision.maxParts)
+        return option && {
+          label: option.label,
+          quality: current.precision.quality,
+          summary: current.precision.recipe.parts.map((p) => `${p.parts} ${p.name}`).join(' · '),
+        }
+      })()
+    : null
   const suggestions = current.suggestions.slice(0, 2)
   const extraById = new Map(extraPaints.map((p) => [p.id, p]))
+  // Respaldo mientras llega el consejo completo (o si falló): los botones de a uno, o un aviso de que se está buscando.
+  const adviceFallback = current.suggestions.length > 0 ? (
+    <>
+      <div className={styles.suggestions}>
+        {suggestions.map((s) => (
+          <PixelButton
+            key={s.role.id}
+            size="sm"
+            variant="secondary"
+            icon="plus"
+            disabled={atLimit}
+            aria-label={`Sumar ${s.role.name}, quedaría ${describeQuality(s.deltaE).toLowerCase()}`}
+            onClick={() => addExtra(s.role)}
+          >
+            <span className={styles.suggestion}>
+              <span>{s.role.name}</span>
+              <span className={styles.hint}>quedaría {describeQuality(s.deltaE).toLowerCase()}</span>
+            </span>
+          </PixelButton>
+        ))}
+      </div>
+      {atLimit && (
+        <PixelText variant="body" size="sm" tone="soft" role="status">
+          Ya usás {MAX_SELECTED} pinturas, el máximo por mezcla. Quitá una para sumar otra.
+        </PixelText>
+      )}
+    </>
+  ) : current.adviceReady ? null : (
+    <PixelText variant="body" size="sm" tone="soft" role="status">Buscando qué colores te faltan...</PixelText>
+  )
 
   return (
     <div className={styles.root}>
@@ -205,6 +249,23 @@ export default function MixResult({ target, paints, onAddPaint }) {
 
       <div className={styles.zone}>
         <ColorCompare compact target={target} mix={shown.mixHex} quality={shown.quality} deltaE={shown.deltaE} />
+        {showAdvice && (
+          // `key`: al pasar de "se puede mejorar" a "no se llega" el banner vuelve a empezar (plegado o abierto)
+          <ImproveAdvice
+            key={needsHelp ? 'help' : 'fine'}
+            needsHelp={needsHelp}
+            gap={gap}
+            plan={current.plan}
+            fallback={adviceFallback}
+            precision={precisionOffer}
+            onUsePrecision={() => setMaxParts(current.precision.maxParts)}
+            toneAdvice={toneAdvice}
+            tip={tip}
+            space={space}
+            onAdd={addExtra}
+            onAddAll={addAll}
+          />
+        )}
         <ul ref={rowsRef} className={styles.rows} data-has-standard={extraPaints.length > 0 || undefined}>
           {shown.parts.map((p) => {
             const extra = extraById.get(p.paintId)
@@ -223,45 +284,6 @@ export default function MixResult({ target, paints, onAddPaint }) {
           })}
         </ul>
       </div>
-
-      {problems.length > 0 && (
-        <PixelPanel tone="yellow" padding="xs" role="note" aria-label="Con estas pinturas no se llega del todo">
-          <div className={styles.advice}>
-            {reasons.length > 0 && <PixelText variant="body" size="sm">{reasons.join(' ')}</PixelText>}
-            {current.plan ? (
-              <PlanAdvice plan={current.plan} space={space} onAdd={addExtra} onAddAll={addAll} />
-            ) : suggestions.length > 0 ? (
-              <>
-                <div className={styles.suggestions}>
-                  {suggestions.map((s) => (
-                    <PixelButton
-                      key={s.role.id}
-                      size="sm"
-                      variant="secondary"
-                      icon="plus"
-                      disabled={atLimit}
-                      aria-label={`Sumar ${s.role.name}, quedaría ${describeQuality(s.deltaE).toLowerCase()}`}
-                      onClick={() => addExtra(s.role)}
-                    >
-                      <span className={styles.suggestion}>
-                        <span>{s.role.name}</span>
-                        <span className={styles.hint}>quedaría {describeQuality(s.deltaE).toLowerCase()}</span>
-                      </span>
-                    </PixelButton>
-                  ))}
-                </div>
-                {atLimit && (
-                  <PixelText variant="body" size="sm" tone="soft" role="status">
-                    Ya usás {MAX_SELECTED} pinturas, el máximo por mezcla. Quitá una para sumar otra.
-                  </PixelText>
-                )}
-              </>
-            ) : (
-              <PixelText variant="body" size="sm" tone="soft" role="status">Buscando qué colores te faltan...</PixelText>
-            )}
-          </div>
-        </PixelPanel>
-      )}
 
       <SaveRecipe {...saveProps(saveFor(shown))} />
       {sheet}

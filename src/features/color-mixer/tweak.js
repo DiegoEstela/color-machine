@@ -10,6 +10,7 @@ export const VIVID_STEP = 1.12 // cuánto se multiplica la intensidad (croma) po
 const GAP_LIGHT = 3 // diferencia de claridad desde la que se dice "más claro/oscuro"
 const GAP_VIVID = 6 // diferencia de croma desde la que se dice "más intenso/apagado"
 const GAP_LOT = 8 // y desde acá se dice "bastante" en vez de "un poco"
+const GAP_TONE = 3 // desplazamiento en el plano a-b de Lab desde el que se dice "tira a…"
 
 export const NEUTRAL_TWEAK = Object.freeze({ light: 0, vivid: 0 })
 
@@ -41,8 +42,23 @@ export function shiftTarget(hex, tweak) {
 const chroma = (lab) => Math.hypot(lab.a, lab.b)
 
 /**
+ * Hacia dónde se corre la mezcla respecto del color buscado en el plano a-b de Lab, tomando el eje dominante:
+ * 'redder' (más a) | 'greener' (menos a) | 'yellower' (más b) | 'bluer' (menos b) | 'same'.
+ * Es lo mismo que "qué le sobra" a la mezcla; lo que falta es lo contrario (si tira a azul, le falta amarillo).
+ */
+function toneShift(t, m) {
+  const dx = m.a - t.a
+  const dy = m.b - t.b
+  if (Math.hypot(dx, dy) < GAP_TONE) return 'same'
+  if (Math.abs(dx) >= Math.abs(dy)) return dx > 0 ? 'redder' : 'greener'
+  return dy > 0 ? 'yellower' : 'bluer'
+}
+
+const TONE_WORD = { redder: 'rojo', greener: 'verde', yellower: 'amarillo', bluer: 'azul' }
+
+/**
  * Cómo es la mezcla respecto del color que se busca, en palabras y sin números.
- * Devuelve `{ light: 'lighter'|'darker'|'same', vivid: 'more'|'duller'|'same', sentences: [...] }`.
+ * Devuelve `{ light: 'lighter'|'darker'|'same', vivid: 'more'|'duller'|'same', tone: 'redder'|'greener'|'yellower'|'bluer'|'same', sentences: [...] }`.
  */
 export function describeGap(target, mix) {
   const t = toLab(target)
@@ -51,15 +67,19 @@ export function describeGap(target, mix) {
   const dC = chroma(m) - chroma(t)
   const light = dL > GAP_LIGHT ? 'lighter' : dL < -GAP_LIGHT ? 'darker' : 'same'
   const vivid = dC > GAP_VIVID ? 'more' : dC < -GAP_VIVID ? 'duller' : 'same'
+  const tone = toneShift(t, m)
   const amount = (n, lot) => (Math.abs(n) > lot ? 'bastante' : 'un poco')
   const sentences = []
   if (light !== 'same') sentences.push(`Tu mezcla es ${amount(dL, GAP_LOT)} ${light === 'lighter' ? 'más clara' : 'más oscura'} que tu color.`)
   if (vivid !== 'same') {
     const how = `${amount(dC, GAP_LOT * 1.5)} ${vivid === 'more' ? 'más intensa' : 'más apagada'}`
-    sentences.push(light === 'same' ? `Tu mezcla es ${how} que tu color.` : `Y es ${how}.`)
+    sentences.push(sentences.length === 0 ? `Tu mezcla es ${how} que tu color.` : `Y es ${how}.`)
   }
-  if (sentences.length === 0) sentences.push('Tu mezcla tiene casi la misma luz y la misma intensidad que tu color.')
-  return { light, vivid, sentences }
+  if (tone !== 'same') {
+    sentences.push(sentences.length === 0 ? `Tu mezcla tira a ${TONE_WORD[tone]} comparada con tu color.` : `Y tira a ${TONE_WORD[tone]}.`)
+  }
+  if (sentences.length === 0) sentences.push('Tu mezcla tiene casi la misma luz, intensidad y tono que tu color.')
+  return { light, vivid, tone, sentences }
 }
 
 /** Frase corta del ajuste activo ("Ajustada: +1 luz, −1 intensidad"); vacía si no hay ajuste. */

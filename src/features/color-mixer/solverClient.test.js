@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { planAsync, solveAsync, suggestAsync } from './solverClient.js'
+import { planAsync, precisionAsync, solveAsync, suggestAsync } from './solverClient.js'
 import { solve } from './solver.js'
-import { planMissingPaints, suggestAdditions } from './advisor.js'
+import { planMissingPaints, suggestAdditions, suggestPrecision } from './advisor.js'
 import { BASE_PAINTS } from './referencePaints.js'
 
 const [rojo, , azul] = BASE_PAINTS
@@ -19,6 +19,16 @@ describe('solverClient (sin Worker)', () => {
   it('planAsync devuelve lo mismo que planMissingPaints', async () => {
     const target = '#2e8b3d'
     expect(await planAsync(target, [rojo, azul], 6)).toEqual(planMissingPaints(target, [rojo, azul], { maxParts: 6 }))
+  })
+  it('planAsync pasa el umbral fino y devuelve lo mismo que planMissingPaints con ese umbral', async () => {
+    const target = '#8b5a2b'
+    const paints = [rojo, BASE_PAINTS[1], azul]
+    expect(await planAsync(target, paints, 10, 2)).toEqual(planMissingPaints(target, paints, { maxParts: 10, threshold: 2 }))
+  })
+  it('precisionAsync devuelve lo mismo que suggestPrecision', async () => {
+    const target = '#c19a6b'
+    const paints = BASE_PAINTS
+    expect(await precisionAsync(target, paints, 10)).toEqual(suggestPrecision(target, paints, { maxParts: 10 }))
   })
   it('cede el hilo antes de calcular', async () => {
     let started = false

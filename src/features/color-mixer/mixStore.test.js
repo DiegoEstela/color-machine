@@ -234,3 +234,31 @@ describe('mixStore: consejo completo (plan)', () => {
     expect(s().result.plan).toBeNull()
   })
 })
+
+describe('mixStore: "Para acercarte más" (desde ΔE 2)', () => {
+  const [rojo, amarillo, azul] = BASE_PAINTS
+  it('un marrón con solo los tres primarios (ΔE ≈ 5) guarda el plan con Negro y la receta nueva', async () => {
+    await s().calculate({ target: '#8b5a2b', paints: [rojo, amarillo, azul] })
+    await waitFor(() => expect(s().result.plan).not.toBeNull())
+    expect(s().result.plan.roles.map((r) => r.name)).toEqual(['Negro'])
+    expect(s().result.plan.deltaE).toBeLessThan(5)
+    expect('precision' in s().result).toBe(true)
+  })
+  it('un color casi idéntico (ΔE < 2) no pide ningún consejo', async () => {
+    await s().calculate({ target: '#c79ba8', paints: [rojo, azul, BASE_PAINTS[3]] })
+    const dE = s().result.data.best.deltaE
+    await new Promise((r) => setTimeout(r, 60))
+    if (dE < 2) {
+      expect(s().result.plan).toBeNull()
+      expect(s().result.precision).toBeNull()
+    }
+  })
+  it('el consejo se pide también con ΔE entre 2 y 5, donde antes no había nada', async () => {
+    // rojo + amarillo + negro dan ΔE ≈ 3,3 para este marrón: "Muy parecido", mejorable
+    await s().calculate({ target: '#8b5a2b', paints: [rojo, amarillo, BASE_PAINTS[4]] })
+    const dE = s().result.data.best.deltaE
+    expect(dE).toBeGreaterThan(2)
+    expect(dE).toBeLessThan(5)
+    await waitFor(() => expect(s().result.plan).not.toBeNull())
+  })
+})

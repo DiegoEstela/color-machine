@@ -3,6 +3,8 @@ import App from './App.jsx'
 import { useMixStore } from './features/color-mixer/mixStore.js'
 import { usePaintsStore } from './features/paints/paintsStore.js'
 import { useRecipesStore } from './features/recipes/recipesStore.js'
+import { markSeen, resetMemory } from './features/onboarding/onboardingStorage.js'
+import { useOnboardingStore } from './features/onboarding/onboardingStore.js'
 
 const signOut = vi.hoisted(() => vi.fn())
 const authState = vi.hoisted(() => ({ status: 'signedIn', recovering: false, user: { email: 'diego@example.com' }, init: () => () => {} }))
@@ -49,6 +51,11 @@ beforeEach(() => {
   Object.values(repos.recipes).forEach((fn) => fn.mockReset())
   repos.recipes.list.mockResolvedValue({ data: RECIPES, error: null })
   window.location.hash = ''
+  authState.user = { id: 'u1', email: 'diego@example.com' }
+  window.localStorage.clear()
+  resetMemory()
+  markSeen('u1') // por defecto el usuario ya vio el recorrido: las demás pruebas no lo ven aparecer
+  useOnboardingStore.getState().reset()
 })
 
 describe('App: estructura de app', () => {
@@ -202,5 +209,97 @@ describe('App: pestañas y rutas', () => {
     render(<App />)
     fireEvent.click(await screen.findByRole('button', { name: 'Crear una mezcla' }))
     expect(window.location.hash).toBe('#/')
+  })
+})
+
+describe('App: onboarding y ayuda', () => {
+  // Cambiar el hash dispara un popstate asíncrono: se espera a que pase para que no cierre el recorrido recién abierto.
+  beforeEach(() => new Promise((r) => setTimeout(r, 30)))
+  const unseen = () => { window.localStorage.clear(); resetMemory() }
+
+  it('la primera vez que entra con sesión se muestra el recorrido de bienvenida', async () => {
+    unseen()
+    render(<App />)
+    expect(await screen.findByRole('dialog', { name: 'Recorrido de bienvenida' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Color Machine/ })).toBeInTheDocument()
+  })
+
+  it('al terminarlo no vuelve a aparecer al abrir la app de nuevo', async () => {
+    unseen()
+    const first = render(<App />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Omitir' }))
+    expect(screen.queryByRole('dialog', { name: 'Recorrido de bienvenida' })).not.toBeInTheDocument()
+    first.unmount()
+    useOnboardingStore.getState().reset() // otra sesión de la app
+    render(<App />)
+    await act(async () => { await new Promise((r) => setTimeout(r, 30)) })
+    expect(screen.queryByRole('dialog', { name: 'Recorrido de bienvenida' })).not.toBeInTheDocument()
+  })
+
+  it('el recorrido se puede pasar completo hasta "¡Empezar!"', async () => {
+    unseen()
+    render(<App />)
+    const tour = within(await screen.findByRole('dialog', { name: 'Recorrido de bienvenida' }))
+    for (let i = 0; i < 7; i++) fireEvent.click(tour.getByRole('button', { name: 'Siguiente' })) // 8 tarjetas
+    expect(tour.getByRole('status')).toHaveTextContent('Paso 8 de 8')
+    fireEvent.click(tour.getByRole('button', { name: '¡Empezar!' }))
+    expect(screen.queryByRole('dialog', { name: 'Recorrido de bienvenida' })).not.toBeInTheDocument()
+  })
+
+  it('sin sesión (pantalla de acceso) no aparece, ni durante la recuperación de contraseña', async () => {
+    unseen()
+    authState.status = 'signedOut'
+    const { unmount } = render(<App />)
+    await act(async () => { await new Promise((r) => setTimeout(r, 30)) })
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    unmount()
+    authState.status = 'signedIn'
+    authState.recovering = true
+    render(<App />)
+    await act(async () => { await new Promise((r) => setTimeout(r, 30)) })
+    expect(screen.queryByRole('dialog', { name: 'Recorrido de bienvenida' })).not.toBeInTheDocument()
+  })
+
+  it('el "?" abre la ayuda del paso en que estás (Crear: paso 1, 2 y 3)', () => {
+    render(<App />)
+    fireEvent.click(screen.getByRole('button', { name: 'Ayuda' }))
+    expect(screen.getByRole('dialog', { name: 'Ayuda: Elegí tu color' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Entendido' }))
+    act(() => { useMixStore.setState({ step: 2, targetColor: '#aabbcc' }) })
+    fireEvent.click(screen.getByRole('button', { name: 'Ayuda' }))
+    expect(screen.getByRole('dialog', { name: 'Ayuda: Tus pinturas' })).toBeInTheDocument()
+  })
+
+  it('en Recetas, Mis pinturas y Cuenta la ayuda es la de esa pantalla', async () => {
+    window.location.hash = '#/recetas'
+    const view = render(<App />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Ayuda' }))
+    expect(screen.getByRole('dialog', { name: 'Ayuda: Tus recetas' })).toBeInTheDocument()
+    view.unmount()
+    useOnboardingStore.getState().reset()
+    window.location.hash = '#/pinturas'
+    const second = render(<App />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Ayuda' }))
+    expect(screen.getByRole('dialog', { name: 'Ayuda: Mis pinturas' })).toBeInTheDocument()
+    second.unmount()
+    useOnboardingStore.getState().reset()
+    window.location.hash = '#/cuenta'
+    render(<App />)
+    fireEvent.click(screen.getByRole('button', { name: 'Ayuda' }))
+    expect(screen.getByRole('dialog', { name: 'Ayuda: Tu cuenta' })).toBeInTheDocument()
+  })
+
+  it('Cuenta tiene "Ver el recorrido de nuevo"', () => {
+    window.location.hash = '#/cuenta'
+    render(<App />)
+    fireEvent.click(screen.getByRole('button', { name: 'Ver el recorrido de nuevo' }))
+    expect(screen.getByRole('dialog', { name: 'Recorrido de bienvenida' })).toBeInTheDocument()
+  })
+
+  it('los pasos del recorrido de nuevo no lo marcan como "no visto": ver la ayuda no lo reinicia', () => {
+    render(<App />)
+    fireEvent.click(screen.getByRole('button', { name: 'Ayuda' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Entendido' }))
+    expect(window.localStorage.getItem('cm.onboarding.v1.u1')).toBe('1')
   })
 })

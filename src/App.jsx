@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { PixelPanel, PixelText } from './components/atoms/index.js'
 import { useAuthStore } from './features/auth/index.js'
+import { useOnboardingStore } from './features/onboarding/onboardingStore.js'
 import { useRoute } from './features/navigation/useRoute.js'
 import Account from './pages/Account/Account.jsx'
 import Auth from './pages/Auth/Auth.jsx'
@@ -17,11 +18,17 @@ const showCatalog = new URLSearchParams(window.location.search).has('catalog')
 
 export default function App() {
   const status = useAuthStore((s) => s.status)
+  const userId = useAuthStore((s) => s.user?.id)
   const recovering = useAuthStore((s) => s.recovering)
   const init = useAuthStore((s) => s.init)
   const { route } = useRoute()
 
   useEffect(() => init(), [init])
+
+  // Primera vez que entra con sesión: recorrido de bienvenida (no en el acceso, la recuperación ni el catálogo).
+  useEffect(() => {
+    if (status === 'signedIn' && !recovering && !showCatalog && userId) useOnboardingStore.getState().autoStart(userId)
+  }, [status, recovering, userId])
 
   if (status === 'loading') {
     return <main className={styles.center}><PixelText>Cargando...</PixelText></main>

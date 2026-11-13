@@ -1,6 +1,6 @@
 # 014 — Onboarding guiado y ayuda siempre a mano
 
-- **Estado:** borrador
+- **Estado:** implementado (medido en Chrome con emulación móvil y tests; falta probarlo en un teléfono real)
 - **Fecha:** 2026-11-13
 
 ## Objetivo
@@ -11,16 +11,17 @@ Hoy no hay ninguna explicación fuera de la hoja ⓘ del paso 3. Cosas que no so
 ## Alcance
 - Incluye:
   - **Recorrido de bienvenida** (pantalla completa, sobre la app) la **primera vez** que el usuario entra con sesión. Se saltea con "Omitir" en cualquier momento.
-  - **7 tarjetas** (una idea por tarjeta, ilustración pixel + 2–3 líneas, voseo):
+  - **8 tarjetas** (una idea por tarjeta, ilustración pixel + 2–3 líneas, voseo):
     1. Bienvenida: "Creá cualquier color mezclando tus pinturas reales."
     2. **Elegí tu color:** rueda y claridad, o foto (punto o recorte), zoom con pellizco / doble toque / botones.
     3. **Tus pinturas:** agregarlas con foto o hex, el consejero ("la tenés" / "Agregar"), elegir de 2 a 6.
-    4. **Tu mezcla:** partes enteras, precisión Simple/Normal/Preciso, calidad ("Casi idéntico"…).
-    5. **Recomendada vs Más exacta**, y qué hacer si no alcanza (+ Blanco / + Negro) y el botón ⓘ.
-    6. **Guardá y reutilizá:** Guardar receta, Recetas, "Mezclar este color otra vez", **Mis pinturas** y el menú ☰ (o deslizar desde el borde).
-    7. **Instalala:** cómo agregarla a la pantalla de inicio (texto distinto Android / iPhone; se omite si ya está instalada, `display-mode: standalone`).
+    4. **Tu mezcla:** partes enteras, precisión Simple/Normal/Preciso, **Recomendada vs Más exacta**, calidad ("Casi idéntico"…) y el botón ⓘ.
+    5. **Si no alcanza:** la app te dice **todos los colores que faltan** ("te faltan: Amarillo y Azul") y **Agregar todos** los suma de una; y **Ajustar** para hacerla más clara/oscura o más intensa/apagada.
+    6. **Guardá y mejorá tus recetas:** Guardar receta, Recetas, **Editar mezcla** (± partes, Más claro / Más oscuro, sumar otro color, deshacer, guardar cambios o como copia) y "Mezclar este color otra vez".
+    7. **Menú y Mis pinturas:** el botón ☰ (o deslizar desde el borde izquierdo) abre el menú con **Mis pinturas**, Recetas y Cuenta; el botón **Crear** del centro empieza una mezcla nueva.
+    8. **Instalala:** cómo agregarla a la pantalla de inicio (texto distinto Android / iPhone; se omite si ya está instalada, `display-mode: standalone`).
   - **Ícono de ayuda "?" siempre visible** (ver decisión abajo) que reabre el recorrido, más un **ítem "Ayuda" en el menú lateral** y un botón "Ver el recorrido de nuevo" en Cuenta.
-  - **Ayuda por pantalla (contextual):** al tocar el "?" se abre primero la tarjeta de la pantalla actual (Crear paso 1/2/3, Recetas, Mis pinturas, Cuenta) y desde ahí se puede seguir al recorrido completo. Así el "?" sirve de verdad dentro de cada paso.
+  - **Ayuda por pantalla (contextual):** al tocar el "?" se abre primero la tarjeta de la pantalla actual (Crear paso 1/2/3, **panel Ajustar**, Recetas, detalle de receta, **Editar mezcla**, Mis pinturas, Cuenta) y desde ahí se puede seguir al recorrido completo. Así el "?" sirve de verdad dentro de cada paso.
   - Navegación del recorrido: Siguiente / Atrás, puntos de progreso, deslizar izquierda/derecha, Esc, botón Atrás del teléfono (cierra), foco atrapado, `role="dialog"`.
   - Recordar que ya lo vio.
 - No incluye: tutorial interactivo con resaltado de elementos reales ("coach marks"), videos, analytics, traducciones, tabla nueva en Supabase.
@@ -74,25 +75,32 @@ Se implementa A + el ítem del drawer + el botón de Cuenta (las tres entradas a
 Sin cambios: no hay tablas ni migraciones. El estado "visto" va en `localStorage` por usuario. (Si se prefiere sincronizar entre dispositivos: `profiles(owner_id, onboarding_seen_at)` con RLS por `auth.uid()` en `supabase/migrations/0002_profiles.sql`, que pegarías en el SQL Editor.)
 
 ## Criterios de aceptación
-- [ ] La primera vez que una cuenta entra, se muestra el recorrido de 7 tarjetas; al terminarlo u omitirlo no vuelve a aparecer en ese dispositivo.
-- [ ] No aparece en la pantalla de acceso, en recuperación de contraseña ni al volver a abrir la app si ya lo vio.
-- [ ] El "?" es visible en todas las pantallas con barra inferior, no cambia el alto de las barras (48/56) ni tapa Crear/pestañas, y responde ≥ 44 px (`elementFromPoint`).
-- [ ] Tocar el "?" abre la ayuda de la pantalla actual (paso 1, 2 o 3, Recetas, Mis pinturas, Cuenta) con opción de ver el recorrido completo; también se abre desde el menú ☰ y desde Cuenta.
-- [ ] El recorrido se navega con Siguiente/Atrás, puntos, deslizar y teclado (flechas, Esc); Atrás del teléfono lo cierra; foco atrapado y devuelto; `role="dialog"` con nombre accesible.
-- [ ] Cada tarjeta entra sin scroll en 360×640, 390×844 y 360×560; el paso 1 sigue entrando sin scroll.
-- [ ] La tarjeta "Instalala" muestra el texto correcto (Android/iPhone) y no aparece si la app ya está instalada.
-- [ ] Contraste AA, textos en voseo, animaciones desactivadas con `prefers-reduced-motion`.
-- [ ] Si `localStorage` falla, la app sigue funcionando (se muestra una vez por sesión).
-- [ ] Tests de `features/onboarding/*`, `OnboardingSheet`, `HelpButton`, Drawer con acciones y `AppShell`; `npm test`, `npm run lint` y `npm run build` pasan.
-- [ ] Pendiente de probar en teléfono real: gesto de deslizar entre tarjetas en iOS, instrucciones de instalación reales, el "?" con la barra de gestos.
+- [x] La primera vez que una cuenta entra se muestra el recorrido de 8 tarjetas (7 si la app ya está instalada); al terminarlo u omitirlo no vuelve a aparecer (medido en Chrome: recarga sin recorrido, `localStorage` con `cm.onboarding.v1.<id>`).
+- [x] No aparece en la pantalla de acceso, en recuperación de contraseña ni en el catálogo (test de `App`); cada usuario lo ve una vez (clave por usuario) y al cerrar sesión se reinicia para el próximo.
+- [x] El "?" es visible en todas las pantallas con barra inferior, apoyado sobre el borde de la barra a la derecha (34 px visibles, 10 px sobre la barra); la barra sigue en 48/56, no tapa Crear ni el centro de Cuenta (`elementFromPoint`), y no cambia el scroll del contenido ni de la página.
+- [x] Tocar el "?" abre la ayuda de la pantalla actual (Crear paso 1, 2 o 3, Recetas, detalle de receta, Editar mezcla, Mis pinturas, Cuenta) con "Ver el recorrido completo"; también se abre desde "Ayuda" en el menú ☰ y desde "Ver el recorrido de nuevo" en Cuenta.
+- [x] Se navega con Siguiente / Atrás, puntos, deslizar de lado (probado con toques reales), flechas y Esc; el botón Atrás del teléfono lo cierra; foco atrapado y devuelto; `role="dialog"` con nombre accesible.
+- [x] Cada tarjeta entra **sin scroll** a 360×640, 360×560 y 390×844 (medido tarjeta por tarjeta).
+- [x] La tarjeta "Instalala" cambia el texto según iPhone / Android / otro y se omite con la app instalada (tests de `detectInstall` y `buildTour`).
+- [x] Textos en voseo; las ilustraciones y los puntos son decorativos (`aria-hidden`); animación de entrada con tokens y `prefers-reduced-motion` (regla global).
+- [x] Si `localStorage` falla, la app sigue funcionando y lo recuerda mientras está abierta (test).
+- [x] Tests de `features/onboarding/*`, `swipe`, `OnboardingSheet`, `OnboardingArt`, `HelpButton`, `Drawer` con acciones, `AppShell`, `App` y menú; `npm test` (735), `npm run lint` y `npm run build` pasan.
+- [ ] Pendiente de probar en teléfono real: deslizar entre tarjetas en iPhone, las instrucciones de instalación reales (Android e iPhone) y el "?" con la barra de gestos.
+
+## Desvíos respecto del plan
+- **Ayuda del panel "Ajustar":** el "?" queda detrás del panel cuando hay un diálogo abierto, así que Ajustar se explica en la tarjeta 5 del recorrido y en la ayuda del paso 3 (no tiene tarjeta propia).
+- El estado del onboarding vive en `onboardingStore` y **`AppShell` monta el recorrido**; el disparo automático está en `App.jsx` (una vez por sesión y por usuario).
+- El gesto de deslizar se factorizó en `lib/swipe.js` (`swipeDirection`), compartido con el gesto de borde del menú.
+- El menú lateral soporta ítems con **acción** (además de enlaces); "Ayuda" abre el recorrido después de cerrar el menú (espera al `history.back()` del menú).
+- Con el recorrido abierto, el gesto de borde del menú se desactiva.
 
 ## Riesgos y preguntas abiertas
-- 7 tarjetas pueden parecer largas: se mitiga con "Omitir" siempre visible y la ayuda contextual para no depender del recorrido.
+- 8 tarjetas pueden parecer largas: se mitiga con "Omitir" siempre visible y la ayuda contextual para no depender del recorrido.
 - Textos de instalación de iOS/Android cambian con las versiones del sistema: se redactan genéricos ("Compartir → Agregar a inicio", "Instalar aplicación").
 - `localStorage` no sincroniza entre dispositivos (ver Datos).
 - El "?" flotante en la esquina inferior derecha puede competir con botones de fin de pantalla (p. ej. "Siguiente" en el paso 1): se verifica en 360×560 y, si molesta, sube unos px o se esconde en esos pasos.
 - **Preguntas:**
   1. ¿Ubicación del "?": opción **A** (flotante abajo a la derecha, recomendada)?
   2. ¿Guardamos "visto" en `localStorage` (recomendado) o en Supabase por cuenta?
-  3. ¿Te sirven las 7 tarjetas propuestas, o querés más cortas (p. ej. 5, uniendo 4+5)?
+  3. ¿Te sirven las 8 tarjetas propuestas (ahora incluyen el consejo de colores, Ajustar, Editar mezcla y el menú), o querés más cortas (p. ej. 6, uniendo 5+6 y 7+8)?
   4. ¿La ayuda contextual por pantalla te parece bien, o solo el recorrido completo?

@@ -59,7 +59,8 @@
   border: var(--border-w) solid var(--color-line);
   box-shadow: var(--shadow-pixel);
 }
-a.item:active { transform: translate(var(--shadow-step), var(--shadow-step)); box-shadow: var(--shadow-pixel-pressed); }
+button.item { width: 100%; font: inherit; text-align: left; cursor: pointer; }
+a.item:active, button.item:active { transform: translate(var(--shadow-step), var(--shadow-step)); box-shadow: var(--shadow-pixel-pressed); }
 .item[aria-current='page'] { background: var(--color-pink); box-shadow: var(--shadow-pixel), var(--bevel-light); }
 .item[data-disabled] { color: var(--color-ink-soft); background: var(--color-disabled); border-color: var(--color-ink-soft); box-shadow: none; }
 .label { font-family: var(--font-pixel); font-size: var(--text-xs); line-height: var(--leading-pixel); }

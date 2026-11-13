@@ -1,10 +1,11 @@
-import { planMissingPaints, suggestAdditions } from './advisor.js'
+import { planMissingPaints, suggestAdditions, suggestPrecision } from './advisor.js'
 import { solve } from './solver.js'
 
 const local = {
   solve: (input) => solve(input),
   suggest: (input) => suggestAdditions(input.target, input.paints, { maxParts: input.maxParts }),
-  plan: (input) => planMissingPaints(input.target, input.paints, { maxParts: input.maxParts }),
+  plan: (input) => planMissingPaints(input.target, input.paints, { maxParts: input.maxParts, threshold: input.threshold }),
+  precision: (input) => suggestPrecision(input.target, input.paints, { maxParts: input.maxParts }),
 }
 
 let worker = null
@@ -58,4 +59,7 @@ export const solveAsync = (input) => run('solve', input)
 export const suggestAsync = (target, paints, maxParts) => run('suggest', { target, paints, maxParts })
 
 /** Igual que `planMissingPaints` (consejo completo: todos los colores que faltan), asíncrono. */
-export const planAsync = (target, paints, maxParts) => run('plan', { target, paints, maxParts })
+export const planAsync = (target, paints, maxParts, threshold) => run('plan', { target, paints, maxParts, threshold })
+
+/** Igual que `suggestPrecision` (¿una precisión mayor acerca la receta?), asíncrono. */
+export const precisionAsync = (target, paints, maxParts) => run('precision', { target, paints, maxParts })

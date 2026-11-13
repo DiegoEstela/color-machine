@@ -11,15 +11,17 @@ const CLOSE_DRAG_PX = 60 // cuánto hay que arrastrar hacia la izquierda para ce
 
 /**
  * Menú lateral (drawer) desde la izquierda. `sections` = `[{ id, title, items: [{ id, label, icon, href, disabled }] }]`.
+ * Un ítem con `action` es un botón: se cierra el menú y después se llama a `onAction(item)`.
  * Se cierra con un toque afuera, Esc, el botón Atrás del teléfono o arrastrándolo hacia la izquierda.
  * `role="dialog"`, con el foco atrapado mientras está abierto. Al elegir un ítem se cierra y después se navega,
  * para que el historial quede limpio (una sola entrada, sin un "Atrás" que no hace nada).
  */
-export default function Drawer({ open, onClose, sections, activeId, email }) {
+export default function Drawer({ open, onClose, sections, activeId, email, onAction }) {
   const panelRef = useRef(null)
   const scrimRef = useRef(null)
   const onCloseRef = useRef(onClose)
   const pendingHref = useRef(null)
+  const pendingAction = useRef(null)
   const drag = useRef(null)
   useEffect(() => { onCloseRef.current = onClose })
 
@@ -38,14 +40,18 @@ export default function Drawer({ open, onClose, sections, activeId, email }) {
     return () => {
       window.removeEventListener('popstate', onPop)
       const href = pendingHref.current
+      const action = pendingAction.current
       pendingHref.current = null
+      pendingAction.current = null
+      // Navegar o abrir algo apenas se cierra pisaría el `history.back()` del menú: se espera a que termine.
+      const run = () => { if (href) navigate(href); else action?.() }
       // `history.state` devuelve una copia en los navegadores: se compara el valor, no el objeto.
       if (!closedByBack && window.history.state?.drawer === token) {
         markOwnBack()
-        if (href) window.addEventListener('popstate', () => navigate(href), { once: true })
+        if (href || action) window.addEventListener('popstate', run, { once: true })
         window.history.back()
-      } else if (href) {
-        navigate(href)
+      } else {
+        run()
       }
     }
   }, [open])
@@ -77,7 +83,8 @@ export default function Drawer({ open, onClose, sections, activeId, email }) {
   const choose = (e, item) => {
     e.preventDefault()
     tap()
-    pendingHref.current = item.href === window.location.hash ? null : item.href
+    if (item.action) pendingAction.current = () => onAction?.(item)
+    else pendingHref.current = item.href === window.location.hash ? null : item.href
     onClose?.()
   }
 
@@ -130,7 +137,12 @@ export default function Drawer({ open, onClose, sections, activeId, email }) {
               <ul className={styles.list}>
                 {section.items.map((item) => (
                   <li key={item.id}>
-                    {item.disabled || !item.href ? (
+                    {item.action && !item.disabled ? (
+                      <button type="button" className={styles.item} onClick={(e) => choose(e, item)}>
+                        <PixelIcon name={item.icon} size={18} />
+                        <span className={styles.label}>{item.label}</span>
+                      </button>
+                    ) : item.disabled || !item.href ? (
                       <span className={styles.item} aria-disabled="true" data-disabled>
                         <PixelIcon name={item.icon} size={18} />
                         <span className={styles.label}>{item.label}</span>

@@ -2,7 +2,8 @@ import { ROUTES } from './useRoute.js'
 
 /**
  * Contenido del menú lateral, definido por datos: para sumar una sección o un ítem se agrega acá.
- * Un ítem sin `href` (o con `disabled`) se muestra como "próximamente" y no es un enlace.
+ * Un ítem con `href` es un enlace; con `action` es un botón que hace algo (por ejemplo, abrir la ayuda);
+ * con `disabled` (o sin ninguno de los dos) se muestra como "próximamente".
  */
 export const MENU_SECTIONS = [
   {
@@ -12,6 +13,7 @@ export const MENU_SECTIONS = [
       { id: 'paints', label: 'Mis pinturas', icon: 'jar', href: ROUTES.paints },
       { id: 'library', label: 'Recetas', icon: 'book', href: ROUTES.library },
       { id: 'account', label: 'Cuenta', icon: 'user', href: ROUTES.account },
+      { id: 'help', label: 'Ayuda', icon: 'help', action: 'help' },
     ],
   },
   {

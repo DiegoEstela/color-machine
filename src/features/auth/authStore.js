@@ -4,6 +4,7 @@ import { onAuthChange } from './authService.js'
 import { usePaintsStore } from '../paints/paintsStore.js'
 import { useMixStore } from '../color-mixer/mixStore.js'
 import { useRecipesStore } from '../recipes/recipesStore.js'
+import { useOnboardingStore } from '../onboarding/onboardingStore.js'
 
 /** status: 'loading' | 'signedIn' | 'signedOut' | 'unconfigured' */
 export const useAuthStore = create((set, get) => ({
@@ -23,6 +24,7 @@ export const useAuthStore = create((set, get) => ({
         usePaintsStore.getState().reset()
         useRecipesStore.getState().reset()
         useMixStore.getState().reset()
+        useOnboardingStore.getState().reset() // el próximo usuario que entre tiene que poder ver el recorrido
       }
       set({
         user: session?.user ?? null,

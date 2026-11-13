@@ -1,4 +1,4 @@
-import { converter } from 'culori'
+import { converter, formatHex } from 'culori'
 import { describe, expect, it } from 'vitest'
 import {
   NEUTRAL_TWEAK, TWEAK_LIMIT, clampTweak, describeGap, describeNeeds, describeTweak, isNeutral, shiftTarget,
@@ -69,11 +69,37 @@ describe('describeGap', () => {
     const gap = describeGap('#336699', '#346a9a')
     expect(gap.light).toBe('same')
     expect(gap.vivid).toBe('same')
-    expect(gap.sentences).toEqual(['Tu mezcla tiene casi la misma luz y la misma intensidad que tu color.'])
+    expect(gap.tone).toBe('same')
+    expect(gap.sentences).toEqual(['Tu mezcla tiene casi la misma luz, intensidad y tono que tu color.'])
   })
   it('distingue "un poco" de "bastante"', () => {
     expect(describeGap('#808080', '#8c8c8c').sentences[0]).toMatch(/un poco/)
     expect(describeGap('#808080', '#e0e0e0').sentences[0]).toMatch(/bastante/)
+  })
+})
+
+describe('describeGap: tono', () => {
+  // Colores armados en Lab (misma claridad) para controlar justo hacia dónde se corre la mezcla.
+  const lab = (l, a, b) => formatHex({ mode: 'lab', l, a, b })
+  const target = lab(50, 15, 35) // un marrón
+
+  it('detecta hacia qué tono tira la mezcla (más rojo, verde, amarillo o azul)', () => {
+    expect(describeGap(target, lab(50, 24, 35)).tone).toBe('redder')
+    expect(describeGap(target, lab(50, 6, 35)).tone).toBe('greener')
+    expect(describeGap(target, lab(50, 15, 44)).tone).toBe('yellower')
+    expect(describeGap(target, lab(50, 15, 26)).tone).toBe('bluer')
+    expect(describeGap(target, target).tone).toBe('same')
+  })
+  it('un corrimiento chico no cuenta', () => {
+    expect(describeGap(target, lab(50, 16, 36)).tone).toBe('same')
+  })
+  it('lo agrega a las frases: sola si es lo único que cambia, y continuando si hay más', () => {
+    const only = describeGap(target, lab(50, 15, 26))
+    expect(only.light).toBe('same')
+    expect(only.sentences).toEqual(expect.arrayContaining([expect.stringMatching(/tira a azul/)]))
+    const both = describeGap(target, lab(60, 15, 26))
+    expect(both.sentences[0]).toMatch(/más clara/)
+    expect(both.sentences.at(-1)).toMatch(/^Y tira a azul\.$/)
   })
 })
 

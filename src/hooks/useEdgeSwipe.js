@@ -1,13 +1,8 @@
 import { useEffect, useRef } from 'react'
+import { SWIPE_MAX_SLOPE, SWIPE_MIN_DX, isRightSwipe } from '../lib/swipe.js'
 
 export const EDGE_PX = 16 // el gesto tiene que empezar a menos de esta distancia del borde izquierdo
-export const SWIPE_MIN_DX = 48 // px que hay que recorrer hacia la derecha
-export const SWIPE_MAX_SLOPE = 0.6 // |dy| / dx máximo: tiene que ser un gesto bastante horizontal
-
-/** ¿Un gesto de (dx, dy) cuenta como "deslizar hacia la derecha"? Pura, para poder probarla. */
-export function isRightSwipe(dx, dy) {
-  return dx >= SWIPE_MIN_DX && Math.abs(dy) <= dx * SWIPE_MAX_SLOPE
-}
+export { SWIPE_MAX_SLOPE, SWIPE_MIN_DX, isRightSwipe }
 
 /**
  * Gesto de borde: deslizar hacia la derecha desde el borde izquierdo de la pantalla llama a `onSwipe`.

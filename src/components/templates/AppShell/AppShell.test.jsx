@@ -1,9 +1,13 @@
-import { act, fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach } from 'vitest'
 import { useNavigationStore } from '../../../features/navigation/navigationStore.js'
+import { useOnboardingStore } from '../../../features/onboarding/onboardingStore.js'
 import { AppShell } from '../index.js'
 
-afterEach(() => useNavigationStore.setState({ drawerOpen: false }))
+afterEach(() => {
+  useNavigationStore.setState({ drawerOpen: false })
+  useOnboardingStore.getState().reset()
+})
 
 describe('AppShell', () => {
   it('tiene barra superior con el título, contenido y barra de pestañas', () => {
@@ -76,5 +80,37 @@ describe('AppShell', () => {
     rerender(<AppShell title="t" scrollKey={2}>x</AppShell>)
     expect(scrollTo).toHaveBeenCalledWith(0, 0)
     HTMLElement.prototype.scrollTo = original
+  })
+
+  it('siempre hay un botón de ayuda "?" y abre la ayuda de la pantalla actual', () => {
+    render(<AppShell title="t">x</AppShell>)
+    fireEvent.click(screen.getByRole('button', { name: 'Ayuda' }))
+    expect(screen.getByRole('dialog', { name: /^Ayuda: / })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Ver el recorrido completo' })).toBeInTheDocument()
+  })
+
+  it('desde la ayuda se pasa al recorrido completo (con "Omitir" y los pasos)', () => {
+    render(<AppShell title="t">x</AppShell>)
+    fireEvent.click(screen.getByRole('button', { name: 'Ayuda' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Ver el recorrido completo' }))
+    expect(screen.getByRole('dialog', { name: 'Recorrido de bienvenida' })).toBeInTheDocument()
+    expect(screen.getByRole('status')).toHaveTextContent(/^Paso 1 de [78]$/)
+    expect(screen.getByRole('button', { name: 'Omitir' })).toBeInTheDocument()
+  })
+
+  it('el menú ☰ tiene "Ayuda" y abre la ayuda', async () => {
+    render(<AppShell title="t">x</AppShell>)
+    fireEvent.click(screen.getByRole('button', { name: 'Abrir menú' }))
+    await act(async () => { fireEvent.click(within(screen.getByRole('dialog', { name: 'Menú' })).getByRole('button', { name: 'Ayuda' })) })
+    expect(await screen.findByRole('dialog', { name: /^Ayuda: / })).toBeInTheDocument()
+  })
+
+  it('con el recorrido abierto, deslizar desde el borde no abre el menú', () => {
+    useOnboardingStore.getState().startTour()
+    render(<AppShell title="t">x</AppShell>)
+    const p = (x, y) => ({ identifier: 1, clientX: x, clientY: y })
+    fireEvent.touchStart(document.body, { touches: [p(3, 300)], changedTouches: [p(3, 300)] })
+    act(() => { fireEvent.touchEnd(document.body, { touches: [], changedTouches: [p(120, 305)] }) })
+    expect(screen.queryByRole('dialog', { name: 'Menú' })).not.toBeInTheDocument()
   })
 })

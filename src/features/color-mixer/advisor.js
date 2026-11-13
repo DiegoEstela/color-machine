@@ -1,7 +1,7 @@
 import { converter } from 'culori'
 import { deltaE } from './mixer.js'
 import { BASE_PAINTS } from './referencePaints.js'
-import { describeQuality, solve } from './solver.js'
+import { PRECISION, describeQuality, qualityLevel, solve } from './solver.js'
 
 const toLab = converter('lab')
 const ADVICE_MAX_PARTS = 8
@@ -11,8 +11,11 @@ const PLAN_MAX_PARTS = 10 // tope de precisión del consejo completo: con 16 y 6
 const PLAN_MAX_PAINTS = 4
 const PLAN_MAX_ADDED = 3 // cuántos colores faltantes se prueban sumar a la vez, como máximo
 const PLAN_MIN_IMPROVEMENT = 0.5 // si nada mejora al menos esto (ΔE), no se recomienda sumar nada
+const PLAN_MIN_IMPROVEMENT_FINE = 1 // con el umbral "para acercarte más" (ΔE ≥ 2) se pide una mejora de verdad
+const PRECISION_MIN_IMPROVEMENT = 1 // una precisión mayor se recomienda si mejora al menos esto (ΔE) o sube de categoría
 export const HAVE_THRESHOLD = 30 // ΔE máximo para decir que una pintura del usuario "es" una pintura base
 export const NEEDS_HELP_DELTA_E = 5 // desde acá se considera que las pinturas no alcanzan
+export const IMPROVE_DELTA_E = 2 // desde acá la pantalla ofrece "Para acercarte más" (por debajo es "Casi idéntico")
 export const MIN_IMPROVEMENT = 3 // una sugerencia debe acercar al menos esto (ΔE) o subir de categoría de calidad
 
 /**
@@ -80,10 +83,16 @@ const combinations = (items, size) => {
  * - `recipe`: la mejor receta con las pinturas elegidas + `roles` (`{ parts, total, mixHex, ... }`).
  * - `enough`: `true` si con eso queda por debajo de ΔE 5.
  */
-export function planMissingPaints(target, selectedPaints, { maxParts = PLAN_MAX_PARTS } = {}) {
+export function planMissingPaints(target, selectedPaints, { maxParts = PLAN_MAX_PARTS, threshold = NEEDS_HELP_DELTA_E } = {}) {
   const options = { target, maxParts: Math.min(maxParts, PLAN_MAX_PARTS), maxPaints: PLAN_MAX_PAINTS }
   const current = solve({ ...options, paints: selectedPaints })
-  if (!current || current.best.deltaE < NEEDS_HELP_DELTA_E) return null
+  if (!current || current.best.deltaE < threshold) return null
+
+  // "Alcanza" = con el umbral de siempre (5), bajar de 5; con el umbral fino (< 5), subir de categoría de parecido.
+  const fine = threshold < NEEDS_HELP_DELTA_E
+  const startLevel = qualityLevel(current.best.deltaE)
+  const reaches = (dE) => (fine ? qualityLevel(dE) > startLevel : dE < NEEDS_HELP_DELTA_E)
+  const minImprovement = fine ? PLAN_MIN_IMPROVEMENT_FINE : PLAN_MIN_IMPROVEMENT
 
   const missing = matchPaints(BASE_PAINTS, selectedPaints).filter((m) => m.status === 'missing').map((m) => m.role)
   let best = null
@@ -97,13 +106,82 @@ export function planMissingPaints(target, selectedPaints, { maxParts = PLAN_MAX_
     }
     if (!bestOfSize) continue
     if (!best || bestOfSize.recipe.deltaE < best.recipe.deltaE) best = bestOfSize
-    if (bestOfSize.recipe.deltaE < NEEDS_HELP_DELTA_E) { best = bestOfSize; break } // el conjunto más chico que alcanza
+    if (reaches(bestOfSize.recipe.deltaE)) { best = bestOfSize; break } // el conjunto más chico que alcanza
   }
 
-  if (!best || current.best.deltaE - best.recipe.deltaE < PLAN_MIN_IMPROVEMENT) {
+  if (!best || current.best.deltaE - best.recipe.deltaE < minImprovement) {
     return { roles: [], recipe: current.best, deltaE: current.best.deltaE, quality: current.best.quality, enough: false }
   }
-  return { roles: best.roles, recipe: best.recipe, deltaE: best.recipe.deltaE, quality: best.recipe.quality, enough: best.recipe.deltaE < NEEDS_HELP_DELTA_E }
+  return { roles: best.roles, recipe: best.recipe, deltaE: best.recipe.deltaE, quality: best.recipe.quality, enough: reaches(best.recipe.deltaE) }
+}
+
+/**
+ * ¿Una precisión mayor acerca la receta? Prueba las precisiones por encima de `maxParts` (6 → 10 → 16) y devuelve la primera
+ * que mejora al menos 1 de ΔE o sube de categoría de parecido: `{ maxParts, deltaE, quality, recipe }`. `null` si no ayuda.
+ */
+export function suggestPrecision(target, paints, { maxParts = PRECISION.normal } = {}) {
+  const current = solve({ target, paints, maxParts })
+  if (!current) return null
+  for (const next of Object.values(PRECISION).filter((n) => n > maxParts)) {
+    const { best } = solve({ target, paints, maxParts: next })
+    const gain = current.best.deltaE - best.deltaE
+    if (gain >= PRECISION_MIN_IMPROVEMENT || (gain > 0 && qualityLevel(best.deltaE) > qualityLevel(current.best.deltaE))) {
+      return { maxParts: next, deltaE: best.deltaE, quality: best.quality, recipe: best }
+    }
+  }
+  return null
+}
+
+/** A qué pintura base se parece una pintura (`'base-rojo'`…), si está a menos de HAVE_THRESHOLD; si no, `null`. */
+export function baseRoleOf(hex) {
+  const nearest = BASE_PAINTS.map((role) => ({ role, dE: deltaE(hex, role.hex) })).sort((a, b) => a.dE - b.dE)[0]
+  return nearest.dE <= HAVE_THRESHOLD ? nearest.role.id : null
+}
+
+// Cómo corregir cuando la mezcla "tira" a un tono: menos de una pintura o más de otra (por tipo de pintura base).
+const TONE_FIX = {
+  bluer: { less: ['base-azul'], more: ['base-amarillo'] },
+  yellower: { less: ['base-amarillo'], more: ['base-azul'] },
+  redder: { less: ['base-rojo'], more: ['base-azul', 'base-amarillo'] },
+  greener: { less: ['base-azul', 'base-amarillo'], more: ['base-rojo'] },
+}
+
+/**
+ * Qué cambiar sin agregar nada cuando la mezcla tira a un tono (`gap.tone` de `describeGap`). Usa los nombres de las pinturas
+ * que ya están en la receta (`parts` = `[{ name, hex }]`) y solo nombra las que existen. Devuelve una frase o `null`.
+ */
+export function adviceForTone(gap, parts) {
+  const fix = TONE_FIX[gap?.tone]
+  if (!fix) return null
+  // la primera pintura de la receta que sea de alguno de esos tipos, en el orden de preferencia de `TONE_FIX`
+  const pick = (ids) => ids.map((id) => parts.find((p) => baseRoleOf(p.hex) === id)?.name).find(Boolean)
+  const less = pick(fix.less)
+  const more = pick(fix.more)
+  const toward = { bluer: 'azul', yellower: 'amarillo', redder: 'rojo', greener: 'verde' }[gap.tone]
+  if (less && more) return `Tira a ${toward}: probá menos ${less} o más ${more}.`
+  if (less) return `Tira a ${toward}: probá menos ${less}.`
+  if (more) return `Tira a ${toward}: probá más ${more}.`
+  return null
+}
+
+const toLch = converter('lch')
+
+/**
+ * Nota según la familia del color buscado: marrón, gris/apagado u oscuro. `{ id, text }` o `null` (colores vivos, claros, etc.).
+ * Marrón = tono naranja-amarillento (LCH 25–85°), croma moderado (12–60) y claridad baja o media (15–72).
+ */
+export function colorFamilyTip(target) {
+  const { l, c, h } = toLch(target)
+  if (l >= 15 && l <= 72 && c >= 12 && c <= 60 && h >= 25 && h <= 85) {
+    return { id: 'brown', text: 'Un marrón se hace con rojo, amarillo y azul. Para oscurecerlo usá negro (o un azul muy oscuro); para aclararlo, blanco.' }
+  }
+  if (c < 10 && l >= 12 && l <= 88) {
+    return { id: 'gray', text: 'Un gris se hace con blanco y negro. Sin ellos, mezclá los tres primarios en partes parecidas.' }
+  }
+  if (l < 28) {
+    return { id: 'dark', text: 'Un color muy oscuro casi siempre lleva negro (o un azul muy oscuro) en la mezcla.' }
+  }
+  return null
 }
 
 const joinNames = (names) => (names.length <= 1 ? names[0] ?? '' : `${names.slice(0, -1).join(', ')} y ${names[names.length - 1]}`)

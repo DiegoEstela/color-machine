@@ -1,0 +1,46 @@
+@keyframes enter {
+  from { opacity: 0; transform: translateY(var(--space-3)); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: flex;
+  justify-content: center;
+  background: var(--color-bg);
+  background-image:
+    linear-gradient(45deg, var(--color-dither) 25%, transparent 25%, transparent 75%, var(--color-dither) 75%),
+    linear-gradient(45deg, var(--color-dither) 25%, transparent 25%, transparent 75%, var(--color-dither) 75%);
+  background-size: 8px 8px;
+  background-position: 0 0, 4px 4px;
+}
+.panel {
+  width: 100%;
+  max-width: 480px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y; /* el scroll vertical es del navegador; el deslizamiento de lado lo maneja el componente */
+  padding: calc(var(--space-3) + var(--safe-top)) max(var(--space-4), var(--safe-right)) calc(var(--space-4) + var(--safe-bottom)) max(var(--space-4), var(--safe-left));
+}
+.top { flex: none; display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
+.card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-height: 0;
+  animation: enter var(--dur-enter) steps(4) 1 backwards;
+}
+.title { margin: 0; overflow-wrap: anywhere; }
+.body { display: flex; flex-direction: column; gap: var(--space-2); }
+.dots { flex: none; display: flex; justify-content: center; gap: var(--space-2); }
+.dot { width: 10px; height: 10px; background: var(--color-disabled); border: var(--border-w) solid var(--color-line); }
+.dot[data-on] { background: var(--color-pink); }
+.actions { flex: none; display: flex; gap: var(--space-3); }
+.actions > button { flex: 1 1 0; min-width: 0; }

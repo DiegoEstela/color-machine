@@ -1,12 +1,13 @@
 // Web Worker: calcula fuera del hilo principal para que la animación no se congele (sobre todo en "Preciso").
-import { planMissingPaints, suggestAdditions } from './advisor.js'
+import { planMissingPaints, suggestAdditions, suggestPrecision } from './advisor.js'
 import { solve } from './solver.js'
 
 self.onmessage = ({ data: { id, kind, input } }) => {
   try {
     const result =
       kind === 'suggest' ? suggestAdditions(input.target, input.paints, { maxParts: input.maxParts })
-      : kind === 'plan' ? planMissingPaints(input.target, input.paints, { maxParts: input.maxParts })
+      : kind === 'plan' ? planMissingPaints(input.target, input.paints, { maxParts: input.maxParts, threshold: input.threshold })
+      : kind === 'precision' ? suggestPrecision(input.target, input.paints, { maxParts: input.maxParts })
       : solve(input)
     self.postMessage({ id, result })
   } catch (error) {

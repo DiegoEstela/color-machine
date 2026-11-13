@@ -9,6 +9,7 @@ const SECTIONS = [
     { id: 'paints', label: 'Mis pinturas', icon: 'jar', href: '#/pinturas' },
     { id: 'library', label: 'Recetas', icon: 'book', href: '#/recetas' },
   ] },
+  { id: 'tools', title: null, items: [{ id: 'help', label: 'Ayuda', icon: 'help', action: 'help' }] },
   { id: 'soon', title: 'Próximamente', items: [{ id: 'q', label: 'Calculador', icon: 'drop', disabled: true }] },
 ]
 
@@ -90,5 +91,18 @@ describe('Drawer', () => {
     fireEvent.click(screen.getByRole('link', { name: 'Mis pinturas' }))
     await waitFor(() => expect(window.location.hash).toBe('#/pinturas'))
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  it('un ítem con acción es un botón: cierra el menú y después ejecuta la acción', async () => {
+    const onAction = vi.fn()
+    function Wrapper() {
+      const [open, setOpen] = useState(true)
+      return <Drawer open={open} onClose={() => setOpen(false)} sections={SECTIONS} onAction={onAction} />
+    }
+    render(<Wrapper />)
+    expect(screen.queryByRole('link', { name: 'Ayuda' })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Ayuda' }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    await waitFor(() => expect(onAction).toHaveBeenCalledWith(expect.objectContaining({ id: 'help', action: 'help' })))
   })
 })

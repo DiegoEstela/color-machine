@@ -12,11 +12,15 @@ describe('MENU_SECTIONS', () => {
     expect(paints.href).toBe('#/pinturas')
     expect(parseRoute(paints.href).name).toBe('paints')
   })
-  it('los ítems habilitados tienen enlace y los deshabilitados no navegan', () => {
+  it('los ítems habilitados tienen enlace o acción y los deshabilitados no hacen nada', () => {
     for (const item of items) {
-      if (item.disabled) expect(item.href).toBeUndefined()
+      if (item.disabled) { expect(item.href).toBeUndefined(); expect(item.action).toBeUndefined() }
+      else if (item.action) expect(item.href).toBeUndefined()
       else expect(item.href).toMatch(/^#\//)
     }
+  })
+  it('incluye Ayuda como acción', () => {
+    expect(items.find((i) => i.id === 'help')).toMatchObject({ label: 'Ayuda', action: 'help' })
   })
 })
 

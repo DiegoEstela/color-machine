@@ -1,0 +1,7 @@
+/* Apoyado sobre el borde de la barra inferior (10 px adentro, el resto afuera), del lado opuesto al ☰ y como Crear. */
+.slot {
+  position: absolute;
+  right: max(var(--space-3), var(--safe-right));
+  bottom: calc(var(--bar-bottom-total) - 10px);
+  z-index: var(--z-header);
+}
