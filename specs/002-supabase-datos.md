@@ -1,6 +1,6 @@
 # 002 — Base de datos en Supabase
 
-- **Estado:** aprobado
+- **Estado:** implementado (código); falta ejecutar la migración y verificar contra Supabase real
 - **Fecha:** 2026-11-13
 
 ## Objetivo
@@ -10,7 +10,7 @@ Persistir las pinturas del usuario y las recetas de color guardadas en Supabase,
 Se descarta la sesión anónima: la app tendrá cuentas con email. Los datos se asocian a `auth.uid()`, así que el usuario los conserva al cambiar de dispositivo o limpiar el navegador. Las tablas y políticas RLS no cambian respecto a la versión anterior; solo cambia de dónde sale la sesión.
 
 ## Alcance
-- Incluye: migración SQL (tablas, RLS, índices), cliente con sesión anónima, módulo `features/storage` con funciones CRUD, tests de las funciones con el cliente mockeado, `.env` documentado.
+- Incluye: migración SQL (tablas, RLS, índices), helper `requireUser()`, módulo `features/storage` con funciones CRUD, tests de las funciones con el cliente mockeado, `.env` documentado.
 - No incluye: UI de pinturas/biblioteca (hitos 4 y 7), subida de fotos, login real, sincronización offline.
 
 ## Plan
@@ -58,13 +58,13 @@ La receta guarda una **copia** de nombre y hex de cada pintura para que editar o
 Las fotos **no** se guardan en esta versión: solo el color resultante, lo que mantiene la base chica y la privacidad simple.
 
 ## Criterios de aceptación
-- [ ] Con sesión iniciada, las operaciones funcionan; sin sesión devuelven un error claro.
+- [ ] Con sesión iniciada, las operaciones funcionan (pendiente: requiere login, spec 003). Sin sesión devuelven un error claro (probado con tests).
 - [ ] Un usuario puede crear, listar, editar y borrar sus pinturas y recetas.
 - [ ] Un segundo navegador (otra cuenta) no ve ni modifica los datos del primero.
 - [ ] Las restricciones rechazan hex inválidos y nombres vacíos.
-- [ ] Sin `.env`, la app no se rompe: los repos devuelven un error claro.
-- [ ] `.env` no está versionado y no hay claves en el código.
-- [ ] `npm test`, `npm run lint` y `npm run build` pasan.
+- [x] Sin `.env`, la app no se rompe: los repos devuelven un error claro.
+- [x] `.env` no está versionado y no hay claves en el código.
+- [x] `npm test`, `npm run lint` y `npm run build` pasan.
 
 ## Riesgos y preguntas abiertas
 - **Abuso de registros**: cualquiera puede crear cuentas con la anon key. Mitigación: confirmación de email, rate limits de Supabase y constraints de tamaño.
