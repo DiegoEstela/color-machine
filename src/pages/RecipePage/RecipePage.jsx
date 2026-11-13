@@ -44,7 +44,7 @@ export default function RecipePage({ id }) {
       </PixelPanel>
     )
   } else {
-    body = <RecipeDetail recipe={recipe} onRename={rename} onRemove={handleRemove} onRemix={handleRemix} />
+    body = <RecipeDetail recipe={recipe} onRename={rename} onRemove={handleRemove} onRemix={handleRemix} onEdit={() => navigate(ROUTES.recipeEdit(recipe.id))} />
   }
 
   return (

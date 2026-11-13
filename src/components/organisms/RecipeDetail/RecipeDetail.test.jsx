@@ -15,6 +15,19 @@ const setup = (props = {}) => {
   return fns
 }
 
+describe('RecipeDetail: editar', () => {
+  it('tiene "Editar mezcla" y avisa con la receta', () => {
+    const onEdit = vi.fn()
+    setup({ onEdit })
+    fireEvent.click(screen.getByRole('button', { name: 'Editar mezcla' }))
+    expect(onEdit).toHaveBeenCalledWith(recipe)
+  })
+  it('sin onEdit no muestra el botón', () => {
+    setup()
+    expect(screen.queryByRole('button', { name: 'Editar mezcla' })).not.toBeInTheDocument()
+  })
+})
+
 describe('RecipeDetail', () => {
   it('muestra el nombre, la comparación con el medidor y las partes por pintura', () => {
     setup()

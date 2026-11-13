@@ -1,4 +1,6 @@
+import { waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it } from 'vitest'
+import { BASE_PAINTS } from './referencePaints.js'
 import { resultKey, useMixStore } from './mixStore.js'
 
 const s = () => useMixStore.getState()
@@ -215,5 +217,20 @@ describe('mixStore: ajuste de luz e intensidad', () => {
     s().setTweak({ light: 2, vivid: 2 })
     s().reset()
     expect(s().tweak).toEqual({ light: 0, vivid: 0 })
+  })
+})
+
+describe('mixStore: consejo completo (plan)', () => {
+  const [rojo, , , , negro] = BASE_PAINTS
+  it('cuando no alcanza guarda el plan con todos los colores que faltan, junto a las sugerencias', async () => {
+    await s().calculate({ target: '#2e8b3d', paints: [rojo, negro] })
+    await waitFor(() => expect(s().result.plan).not.toBeNull())
+    expect(s().result.plan.roles.map((r) => r.name).sort()).toEqual(['Amarillo', 'Azul'])
+    expect(Array.isArray(s().result.suggestions)).toBe(true)
+  })
+  it('si ya alcanza no hay plan', async () => {
+    await s().calculate({ target: '#e4002b', paints: [rojo, negro] })
+    await new Promise((r) => setTimeout(r, 50))
+    expect(s().result.plan).toBeNull()
   })
 })

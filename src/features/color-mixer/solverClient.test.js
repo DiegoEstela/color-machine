@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { solveAsync, suggestAsync } from './solverClient.js'
+import { planAsync, solveAsync, suggestAsync } from './solverClient.js'
 import { solve } from './solver.js'
-import { suggestAdditions } from './advisor.js'
+import { planMissingPaints, suggestAdditions } from './advisor.js'
 import { BASE_PAINTS } from './referencePaints.js'
 
 const [rojo, , azul] = BASE_PAINTS
@@ -15,6 +15,10 @@ describe('solverClient (sin Worker)', () => {
   it('suggestAsync devuelve lo mismo que suggestAdditions', async () => {
     const target = '#cfb8e8'
     expect(await suggestAsync(target, [rojo, azul], 6)).toEqual(suggestAdditions(target, [rojo, azul], { maxParts: 6 }))
+  })
+  it('planAsync devuelve lo mismo que planMissingPaints', async () => {
+    const target = '#2e8b3d'
+    expect(await planAsync(target, [rojo, azul], 6)).toEqual(planMissingPaints(target, [rojo, azul], { maxParts: 6 }))
   })
   it('cede el hilo antes de calcular', async () => {
     let started = false

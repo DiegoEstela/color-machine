@@ -1,0 +1,5 @@
+.row { display: flex; flex-direction: column; gap: var(--space-1); list-style: none; padding: var(--space-2) 0; }
+.top { display: flex; align-items: center; gap: var(--space-3); }
+.name { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.bar { height: 8px; background: var(--color-disabled); border: var(--border-w) solid var(--color-line); }
+.fill { display: block; height: 100%; background: var(--bar-color); }

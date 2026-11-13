@@ -1,0 +1,8 @@
+.root { display: flex; flex-direction: column; gap: var(--space-3); }
+.trend { display: flex; flex-direction: column; gap: var(--space-1); }
+.shortcuts { display: flex; gap: var(--space-2); }
+.shortcuts > button { flex: 1 1 0; min-width: 0; }
+.rows { display: flex; flex-direction: column; margin: 0; padding: 0; }
+.row { display: flex; gap: var(--space-2); }
+.row > button { flex: 1 1 0; min-width: 0; }
+.save { display: flex; flex-direction: column; gap: var(--space-2); }

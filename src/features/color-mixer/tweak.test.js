@@ -89,7 +89,7 @@ describe('describeNeeds', () => {
   it('traduce el diagnóstico en qué sumar', () => {
     expect(describeNeeds([{ code: 'need_white' }])).toEqual(['Te falta blanco para que quede más claro.'])
     expect(describeNeeds([{ code: 'need_black' }, { code: 'need_vivid' }])).toHaveLength(2)
-    expect(describeNeeds([{ code: 'need_hue' }])[0]).toMatch(/tono/)
+    expect(describeNeeds([{ code: 'need_hue' }])).toEqual([]) // el tono lo cubre el consejo completo
     expect(describeNeeds([{ code: 'otra' }])).toEqual([])
   })
 })

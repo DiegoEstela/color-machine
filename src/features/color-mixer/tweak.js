@@ -76,8 +76,10 @@ const NEEDS = {
   need_white: 'Te falta blanco para que quede más claro.',
   need_black: 'Te falta negro para que quede más oscuro.',
   need_vivid: 'Con estas pinturas no sale más intenso: probá con colores más puros.',
-  need_hue: 'Falta una pintura de un tono parecido al tuyo.',
 }
 
-/** Traduce el diagnóstico del consejero (`advisor.diagnose`) a frases de "qué sumar" para el panel de ajuste. */
+/**
+ * Traduce el diagnóstico del consejero (`advisor.diagnose`) a frases de "qué sumar" para el panel de ajuste.
+ * El motivo de tono (`need_hue`) no tiene frase propia: lo explica el consejo completo (`planMissingPaints`).
+ */
 export const describeNeeds = (problems) => problems.map((p) => NEEDS[p.code]).filter(Boolean)

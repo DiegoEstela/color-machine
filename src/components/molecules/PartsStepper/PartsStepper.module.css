@@ -1,0 +1,2 @@
+.root { display: flex; align-items: center; gap: var(--space-3); flex: none; }
+.value { min-width: 2ch; text-align: center; }

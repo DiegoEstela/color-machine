@@ -9,9 +9,9 @@ import styles from './RecipeDetail.module.css'
 
 /**
  * Detalle de una receta guardada: comparación con el medidor, partes por pintura y acciones
- * (renombrar, borrar con confirmación y "Mezclar este color otra vez"). Las acciones devuelven `{ error? }`.
+ * (editar la mezcla, renombrar, borrar con confirmación y "Mezclar este color otra vez"). Las acciones devuelven `{ error? }`.
  */
-export default function RecipeDetail({ recipe, onRename, onRemove, onRemix }) {
+export default function RecipeDetail({ recipe, onRename, onRemove, onRemix, onEdit }) {
   const [renaming, setRenaming] = useState(false)
   const [confirming, setConfirming] = useState(false)
   const [actionError, setActionError] = useState(null)
@@ -64,7 +64,8 @@ export default function RecipeDetail({ recipe, onRename, onRemove, onRemix }) {
         />
       ) : (
         <div className={styles.actions}>
-          <PixelButton icon="wheel" onClick={() => onRemix(recipe)}>Mezclar este color otra vez</PixelButton>
+          {onEdit && <PixelButton icon="tune" onClick={() => onEdit(recipe)}>Editar mezcla</PixelButton>}
+          <PixelButton variant="secondary" icon="wheel" onClick={() => onRemix(recipe)}>Mezclar este color otra vez</PixelButton>
           <div className={styles.row}>
             <PixelButton variant="secondary" onClick={() => { setActionError(null); setRenaming(true) }}>Renombrar</PixelButton>
             {confirming ? (

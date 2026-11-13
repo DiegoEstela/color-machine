@@ -14,6 +14,8 @@ describe('parseRoute', () => {
     ['#/recetas/abc-123', { name: 'recipe', id: 'abc-123' }],
     ['#/cuenta', { name: 'account' }],
     ['#/pinturas', { name: 'paints' }],
+    ['#/recetas/abc-123/editar', { name: 'recipe-edit', id: 'abc-123' }],
+    ['#/recetas/a%20b/editar/', { name: 'recipe-edit', id: 'a b' }],
     ['#/cualquier-cosa', { name: 'create' }],
   ])('%s → %o', (hash, route) => expect(parseRoute(hash)).toEqual(route))
 
@@ -28,6 +30,7 @@ describe('ROUTES y tabFor', () => {
     expect(parseRoute(ROUTES.library).name).toBe('library')
     expect(parseRoute(ROUTES.account).name).toBe('account')
     expect(parseRoute(ROUTES.paints).name).toBe('paints')
+    expect(parseRoute(ROUTES.recipeEdit('x y'))).toEqual({ name: 'recipe-edit', id: 'x y' })
     expect(parseRoute(ROUTES.recipe('x y'))).toEqual({ name: 'recipe', id: 'x y' })
   })
   it('el detalle de una receta marca la pestaña Recetas', () => {
@@ -35,6 +38,7 @@ describe('ROUTES y tabFor', () => {
     expect(tabFor({ name: 'create' })).toBe('create')
     expect(tabFor({ name: 'account' })).toBe('account')
     expect(tabFor({ name: 'paints' })).toBeNull()
+    expect(tabFor({ name: 'recipe-edit', id: 'a' })).toBe('library')
   })
 })
 

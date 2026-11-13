@@ -1,5 +1,5 @@
 import { PixelButton, PixelText } from '../../atoms/index.js'
-import { ColorCompare, InfoSheet, TweakControl } from '../../molecules/index.js'
+import { ColorCompare, InfoSheet, PlanAdvice, TweakControl } from '../../molecules/index.js'
 import { describeQuality } from '../../../features/color-mixer/solver.js'
 import { describeGap, isNeutral } from '../../../features/color-mixer/tweak.js'
 import styles from './TweakSheet.module.css'
@@ -8,11 +8,13 @@ import styles from './TweakSheet.module.css'
  * Panel "Ajustar tu mezcla": Luz e Intensidad con la comparación en vivo y, si hace falta, qué sumar.
  * - `target`: el color original (el parecido siempre se mide contra él). `shown`: la receta que se está viendo.
  * - `tweak` / `onChange` / `onReset`: el ajuste actual `{ light, vivid }` y sus acciones.
- * - `needs`: frases de qué falta ("Te falta blanco…"). `suggestions`: `[{ role, deltaE }]` para los botones "+ Color".
+ * - `needs`: frases de qué falta ("Te falta blanco…"). `plan`: el consejo completo (todos los colores que faltan, con
+ *   "Agregar todos"); si todavía no llegó se usan `suggestions` (`[{ role, deltaE }]`, botones "+ Color" de a uno).
  * - `busy`: se está recalculando (los controles esperan). `atLimit`: ya hay el máximo de pinturas.
  */
 export default function TweakSheet({
-  open, onClose, target, shown, tweak, onChange, onReset, needs = [], suggestions = [], onAdd, busy = false, atLimit = false,
+  open, onClose, target, shown, tweak, onChange, onReset, needs = [], suggestions = [], onAdd, onAddAll, plan = null, space = 0,
+  busy = false, atLimit = false,
 }) {
   const gap = shown ? describeGap(target, shown.mixHex) : null
   return (
@@ -41,10 +43,11 @@ export default function TweakSheet({
         onChange={(vivid) => onChange({ ...tweak, vivid })}
       />
 
-      {!busy && needs.length > 0 && (
+      {!busy && (needs.length > 0 || plan) && (
         <div className={styles.needs} role="note" aria-label="Qué te falta">
-          <PixelText variant="body" size="sm">{needs.join(' ')}</PixelText>
-          {suggestions.length > 0 && (
+          {needs.length > 0 && <PixelText variant="body" size="sm">{needs.join(' ')}</PixelText>}
+          {plan && <PlanAdvice plan={plan} space={space} onAdd={onAdd} onAddAll={onAddAll} />}
+          {!plan && suggestions.length > 0 && (
             <div className={styles.suggestions}>
               {suggestions.map((s) => (
                 <PixelButton
@@ -64,7 +67,7 @@ export default function TweakSheet({
               ))}
             </div>
           )}
-          {atLimit && suggestions.length > 0 && (
+          {!plan && atLimit && suggestions.length > 0 && (
             <PixelText variant="body" size="sm" tone="soft" role="status">Ya usás el máximo de pinturas. Quitá una para sumar otra.</PixelText>
           )}
         </div>

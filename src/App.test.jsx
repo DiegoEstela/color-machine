@@ -110,6 +110,22 @@ describe('App: pestañas y rutas', () => {
     expect(screen.getByRole('button', { name: 'Mezclar este color otra vez' })).toBeInTheDocument()
   })
 
+  it('"Editar mezcla" abre la edición; abierta directo funciona y Atrás vuelve a la receta', async () => {
+    window.location.hash = '#/recetas/r2/editar'
+    render(<App />)
+    expect(await screen.findByRole('heading', { name: 'Editar mezcla', level: 1 })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Recetas' })).toHaveAttribute('aria-current', 'page')
+    expect(screen.getByRole('link', { name: 'Volver a la receta' })).toHaveAttribute('href', '#/recetas/r2')
+    expect(await screen.findByRole('button', { name: 'Más claro' })).toBeInTheDocument()
+  })
+
+  it('el botón "Editar mezcla" del detalle lleva a #/recetas/<id>/editar', async () => {
+    window.location.hash = '#/recetas/r1'
+    render(<App />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Editar mezcla' }))
+    expect(window.location.hash).toBe('#/recetas/r1/editar')
+  })
+
   it('un id inexistente muestra un aviso y una salida', async () => {
     window.location.hash = '#/recetas/nope'
     render(<App />)

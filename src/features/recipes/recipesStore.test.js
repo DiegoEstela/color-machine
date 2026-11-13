@@ -43,6 +43,21 @@ describe('recipesStore', () => {
     expect(repo.update).toHaveBeenCalledWith('a', { name: 'Nuevo' })
     expect(s().recipes[0].name).toBe('Nuevo')
   })
+  it('updateMix guarda mix y result_hex (y nada más) y reemplaza la receta', async () => {
+    useRecipesStore.setState({ recipes: [recipe('a'), recipe('b')] })
+    const updated = { ...recipe('a'), result_hex: '#aa0000', mix: [{ name: 'Rojo', hex: '#e4002b', parts: 3 }] }
+    repo.update.mockResolvedValue({ data: updated, error: null })
+    const result = await s().updateMix('a', { mix: updated.mix, result_hex: '#aa0000' })
+    expect(repo.update).toHaveBeenCalledWith('a', { mix: updated.mix, result_hex: '#aa0000' })
+    expect(result.data).toBe(updated)
+    expect(s().recipes.map((r) => r.result_hex)).toEqual(['#aa0000', '#583087'])
+  })
+  it('updateMix con error devuelve el mensaje y no toca la lista', async () => {
+    useRecipesStore.setState({ recipes: [recipe('a')] })
+    repo.update.mockResolvedValue({ data: null, error: { message: 'Sin conexión.' } })
+    expect(await s().updateMix('a', { mix: [], result_hex: '#000000' })).toEqual({ error: 'Sin conexión.' })
+    expect(s().recipes[0].result_hex).toBe('#583087')
+  })
   it('remove quita la receta; con error no la toca', async () => {
     useRecipesStore.setState({ recipes: [recipe('a'), recipe('b')] })
     repo.remove.mockResolvedValue({ data: null, error: { message: 'Falló' } })

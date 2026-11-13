@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { adviseBasePaints, diagnose, matchPaints, suggestAdditions } from './advisor.js'
+import { adviseBasePaints, describePlan, diagnose, matchPaints, planMissingPaints, suggestAdditions } from './advisor.js'
 import { BASE_PAINTS } from './referencePaints.js'
 import { mixHex } from './mixer.js'
 import { solve } from './solver.js'
@@ -139,5 +139,83 @@ describe('diagnose', () => {
     const recipe = recipeFor(target, [rojo, negro])
     expect(recipe.deltaE).toBeGreaterThanOrEqual(5)
     expect(diagnose(target, recipe).length).toBeGreaterThan(0)
+  })
+})
+
+describe('planMissingPaints: consejo completo', () => {
+  const sinPlan = (plan) => plan.roles.map((r) => r.name).sort()
+
+  it('si ya alcanza no hay plan', () => {
+    expect(planMissingPaints(mixOf([rojo, 1], [azul, 2]), [rojo, azul])).toBeNull()
+  })
+
+  it('un verde con solo rojo y negro pide amarillo Y azul juntos (ninguno solo alcanza)', () => {
+    const target = '#2e8b3d'
+    // de a una, ninguna suma mejora lo suficiente: el consejo de siempre queda vacío
+    expect(suggestAdditions(target, [rojo, negro]).map((s) => s.role.name)).not.toEqual(expect.arrayContaining(['Amarillo', 'Azul']))
+    const plan = planMissingPaints(target, [rojo, negro])
+    expect(sinPlan(plan)).toEqual(['Amarillo', 'Azul'])
+    expect(plan.enough).toBe(true)
+    expect(plan.deltaE).toBeLessThan(5)
+    expect(plan.recipe.parts.map((p) => p.name)).toEqual(expect.arrayContaining(['Amarillo', 'Azul']))
+  })
+
+  it('elige el conjunto más chico que alcanza: un naranja con azul y negro pide rojo y amarillo, no tres', () => {
+    const plan = planMissingPaints('#ff8c00', [azul, negro])
+    expect(sinPlan(plan)).toEqual(['Amarillo', 'Rojo'])
+  })
+
+  it('un solo color que falta se recomienda solo (un rosa pastel pide blanco)', () => {
+    const plan = planMissingPaints(mixOf([rojo, 1], [blanco, 3]), [rojo, negro])
+    expect(sinPlan(plan)).toEqual(['Blanco'])
+    expect(plan.enough).toBe(true)
+    expect(plan.deltaE).toBeLessThan(5)
+  })
+
+  it('si ni sumando lo que falta llega del todo, igual dice qué sumar y cuánto se acerca (sin prometer de más)', () => {
+    const plan = planMissingPaints('#d9c6ef', [{ id: 'ro', name: 'Rojo', hex: '#c1121f' }, azul])
+    expect(sinPlan(plan)).toContain('Blanco')
+    expect(plan.roles.length).toBeGreaterThan(0)
+    expect(describePlan(plan)).toMatch(/Blanco/)
+    expect(plan.enough).toBe(plan.deltaE < 5)
+  })
+
+  it('no ofrece pinturas que el usuario ya tiene', () => {
+    const plan = planMissingPaints('#2e8b3d', [rojo, amarillo, negro])
+    expect(sinPlan(plan)).not.toContain('Amarillo')
+    expect(sinPlan(plan)).not.toContain('Rojo')
+  })
+
+  it('si sumar no mejora nada, no inventa: devuelve roles vacíos con lo más cerca que se llega', () => {
+    // con todo lo de la caja base ya presente no queda nada que sumar
+    const plan = planMissingPaints('#00ffff', [rojo, amarillo, azul, blanco, negro])
+    if (plan) {
+      expect(plan.roles).toEqual([])
+      expect(plan.enough).toBe(false)
+      expect(describePlan(plan)).toMatch(/lo más cerca que se llega/)
+    }
+  })
+
+  it('la receta del plan usa todos los colores sumados', () => {
+    const plan = planMissingPaints('#2e8b3d', [rojo, negro])
+    for (const role of plan.roles) expect(plan.recipe.parts.some((p) => p.paintId === role.id)).toBe(true)
+  })
+})
+
+describe('describePlan', () => {
+  const recipe = { parts: [{ name: 'Amarillo', parts: 3 }, { name: 'Azul', parts: 4 }] }
+  it('dice qué te falta, cómo queda y la receta', () => {
+    const text = describePlan({ roles: [{ name: 'Amarillo' }, { name: 'Azul' }], recipe, quality: 'Muy parecido', enough: true })
+    expect(text).toBe('Para este color te faltan: Amarillo y Azul. Con eso queda muy parecido: 3 Amarillo · 4 Azul.')
+  })
+  it('concuerda en singular y une tres con comas', () => {
+    expect(describePlan({ roles: [{ name: 'Blanco' }], recipe, quality: 'Casi idéntico', enough: true })).toMatch(/te falta: Blanco\./)
+    expect(describePlan({ roles: [{ name: 'A' }, { name: 'B' }, { name: 'C' }], recipe, quality: 'Parecido', enough: true })).toMatch(/A, B y C/)
+  })
+  it('si no llega del todo lo dice con honestidad', () => {
+    expect(describePlan({ roles: [{ name: 'Blanco' }], recipe, quality: 'Parecido', enough: false })).toMatch(/te acercás todo lo que se puede/)
+  })
+  it('sin plan no hay frase', () => {
+    expect(describePlan(null)).toBeNull()
   })
 })

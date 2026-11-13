@@ -171,7 +171,7 @@ describe('MixResult: sumar el color sugerido', () => {
   it('si la receta no alcanza avisa qué falta y ofrece botones "+ Color"', async () => {
     await mount()
     const note = screen.getByRole('note', { name: 'Con estas pinturas no se llega del todo' })
-    expect(note).toHaveTextContent(/probá sumar blanco/)
+    expect(await within(note).findByText(/Para este color|Sumando/, {}, { timeout: 4000 })).toBeInTheDocument() // el consejo completo dice qué sumar
     const button = await sumarBlanco()
     expect(button).toBeEnabled()
     expect(button).toHaveTextContent(/quedaría/)
@@ -240,7 +240,7 @@ describe('MixResult: sumar el color sugerido', () => {
     render(<MixResult target={lavender} paints={six} onAddPaint={() => {}} />)
     await ready()
     expect(await sumarBlanco()).toBeDisabled()
-    expect(screen.getByText(/Ya usás 6 pinturas, el máximo por mezcla/)).toBeInTheDocument()
+    expect(screen.getByText(/Ya usás el máximo de pinturas por mezcla/)).toBeInTheDocument()
   })
 
   it('las pinturas sumadas se guardan en la receta con su nombre, color y partes', async () => {
@@ -391,8 +391,26 @@ describe('MixResult: ajustar luz e intensidad', () => {
     await ready()
     fireEvent.click(screen.getByRole('button', { name: /Ajustar/ }))
     const dialog = screen.getByRole('dialog', { name: 'Ajustar tu mezcla' })
-    expect(await within(dialog).findByText(/Te falta blanco/, {}, { timeout: 4000 })).toBeInTheDocument()
+    expect(await within(dialog).findByText(/Para este color|Sumando/, {}, { timeout: 4000 })).toBeInTheDocument() // el consejo completo
     fireEvent.click(await within(dialog).findByRole('button', { name: /Sumar Blanco/ }, { timeout: 4000 }))
     expect(useMixStore.getState().extraPaints.map((p) => p.id)).toEqual(['base-blanco'])
+  })
+})
+
+describe('MixResult: consejo completo de colores', () => {
+  const rojoBase = BASE_PAINTS[0]
+  const negroBase = BASE_PAINTS[4]
+  const verde = '#2e8b3d'
+
+  it('si faltan dos colores a la vez dice cuáles y deja agregarlos todos con un toque', async () => {
+    render(<MixResult target={verde} paints={[rojoBase, negroBase]} onAddPaint={() => {}} />)
+    await ready()
+    const note = screen.getByRole('note', { name: 'Con estas pinturas no se llega del todo' })
+    expect(await within(note).findByText(/te faltan: Amarillo y Azul/, {}, { timeout: 4000 })).toBeInTheDocument()
+    expect(within(note).queryByText(/tono parecido/)).not.toBeInTheDocument() // ya no queda un aviso sin acción
+    fireEvent.click(within(note).getByRole('button', { name: /Agregar todos/ }))
+    expect(useMixStore.getState().extraPaints.map((p) => p.name).sort()).toEqual(['Amarillo', 'Azul'])
+    await waitFor(() => expect(useMixStore.getState().result?.status).toBe('ready'), { timeout: 4000 })
+    await waitFor(() => expect(useMixStore.getState().result.data.best.deltaE).toBeLessThan(5), { timeout: 4000 })
   })
 })

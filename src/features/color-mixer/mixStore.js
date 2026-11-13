@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { normalizeHex } from '../../lib/color.js'
 import { DEFAULT_MAX_PARTS } from './solver.js'
 import { rankOf } from './solver.js'
-import { solveAsync, suggestAsync } from './solverClient.js'
+import { planAsync, solveAsync, suggestAsync } from './solverClient.js'
 import { NEEDS_HELP_DELTA_E } from './advisor.js'
 import { NEUTRAL_TWEAK, clampTweak, isNeutral, shiftTarget } from './tweak.js'
 
@@ -22,7 +22,7 @@ export const useMixStore = create((set, get) => ({
   recipeKey: 'recommended', // 'recommended' | 'best'
   tweak: { ...NEUTRAL_TWEAK }, // ajuste de Luz e Intensidad (-3..+3) pedido en el panel "Ajustar"
   extraPaints: [], // pinturas estándar sumadas a esta mezcla desde el paso 3 (solo en memoria)
-  result: null, // { key, status: 'mixing' | 'ready' | 'error', data, suggestions }
+  result: null, // { key, status: 'mixing' | 'ready' | 'error', data, suggestions, plan }
   savedRecipes: {}, // firma de receta (objetivo + partes) → id guardado, para no duplicar en la sesión
 
   /** Guarda el color objetivo (hex normalizado). Ignora valores inválidos. */
@@ -71,17 +71,22 @@ export const useMixStore = create((set, get) => ({
     const key = resultKey(target, paints, maxParts, tweak)
     const aim = isNeutral(tweak) ? null : shiftTarget(target, tweak) // color al que apunta el cálculo con "más luz" o "más intenso"
     if (get().result?.key === key) return
-    set({ result: { key, status: 'mixing', data: null, suggestions: [] }, recipeKey: 'recommended' })
+    set({ result: { key, status: 'mixing', data: null, suggestions: [], plan: null }, recipeKey: 'recommended' })
     try {
       const data = await solveAsync(aim ? { target, paints, maxParts, aim } : { target, paints, maxParts })
       if (get().result?.key !== key) return
-      set({ result: { key, status: 'ready', data, suggestions: [] } })
+      set({ result: { key, status: 'ready', data, suggestions: [], plan: null } })
       if (data && rankOf(data.best) >= NEEDS_HELP_DELTA_E) {
-        const suggestions = await suggestAsync(aim ?? target, paints, maxParts)
-        if (get().result?.key === key) set({ result: { ...get().result, suggestions } })
+        // Consejo de qué sumar: los botones de a uno y el plan completo (todos los colores que faltan) llegan juntos,
+        // así la pantalla no cambia de botones a mitad de camino. Si el plan falla, queda el consejo de siempre.
+        const [suggestions, plan] = await Promise.all([
+          suggestAsync(aim ?? target, paints, maxParts),
+          planAsync(aim ?? target, paints, maxParts).catch(() => null),
+        ])
+        if (get().result?.key === key) set({ result: { ...get().result, suggestions, plan } })
       }
     } catch {
-      if (get().result?.key === key) set({ result: { key, status: 'error', data: null, suggestions: [] } })
+      if (get().result?.key === key) set({ result: { key, status: 'error', data: null, suggestions: [], plan: null } })
     }
   },
 

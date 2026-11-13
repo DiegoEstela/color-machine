@@ -27,7 +27,7 @@ export const MENU_SECTIONS = [
 /** Ítem del menú que corresponde a una ruta (el detalle de una receta cuenta como Recetas). */
 export function menuItemFor(route) {
   if (route.name === 'paints') return 'paints'
-  if (route.name === 'library' || route.name === 'recipe') return 'library'
+  if (route.name === 'library' || route.name === 'recipe' || route.name === 'recipe-edit') return 'library'
   if (route.name === 'account') return 'account'
   return null
 }

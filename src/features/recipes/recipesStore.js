@@ -29,6 +29,14 @@ export const useRecipesStore = create((set) => ({
     return { data }
   },
 
+  /** Guarda los cambios de la mezcla de una receta: `{ mix, result_hex }` (el color buscado no cambia). */
+  async updateMix(id, { mix, result_hex }) {
+    const { data, error } = await recipesRepo.update(id, { mix, result_hex })
+    if (error) return { error: error.message }
+    set((s) => ({ recipes: s.recipes.map((r) => (r.id === id ? data : r)) }))
+    return { data }
+  },
+
   async remove(id) {
     const { error } = await recipesRepo.remove(id)
     if (error) return { error: error.message }

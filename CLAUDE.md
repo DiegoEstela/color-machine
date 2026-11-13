@@ -5,7 +5,7 @@ App web **mobile-first e instalable (PWA)** para **crear colores mezclando pintu
 Repo: `github.com/DiegoEstela/color-machine` (rama `main`). Se despliega solo en **Vercel** con cada push. Base de datos y login en **Supabase** (proyecto del usuario; la URL y la clave pública están en su `.env`, que no se versiona).
 
 ## Estado actual (leer primero)
-**Los 15 specs del plan están implementados y subidos** (ver "Índice de specs"). El ciclo completo funciona: elegir color → elegir pinturas → calcular proporciones → guardar receta → biblioteca. **Lo que NO se pudo comprobar en esta etapa** (solo se verificó con tests y con Chrome simulando un móvil), y que el usuario va a probar en su teléfono:
+**Los 16 specs del plan están implementados y subidos** (ver "Índice de specs"). El ciclo completo funciona: elegir color → elegir pinturas → calcular proporciones → guardar receta → biblioteca. **Lo que NO se pudo comprobar en esta etapa** (solo se verificó con tests y con Chrome simulando un móvil), y que el usuario va a probar en su teléfono:
 - Instalación real como app (Android/iPhone) sin cabecera del navegador (spec 011).
 - **iPhone/Safari:** que pellizcar la foto no agrande toda la pantalla (spec 010), el teclado con la barra inferior, la hoja ⓘ y la barra de gestos.
 - **Supabase real:** guardar/listar recetas y pinturas con su cuenta, y que **otra cuenta no vea esos datos** (RLS). Requiere haber ejecutado `supabase/migrations/0001_init.sql` en el SQL Editor (no hay CLI de Supabase: Xcode viejo impide `brew install supabase`).
@@ -35,7 +35,7 @@ Vite 8 + React 19 (**JavaScript, sin TypeScript**) · Zustand (estado) · CSS Mo
 ```
 src/
   components/{atoms,molecules,organisms,templates}
-  pages/        Create (asistente), Paints, Library, RecipePage, Account, Auth, Catalog (?catalog=1)
+  pages/        Create (asistente), Paints, RecipeEdit, Library, RecipePage, Account, Auth, Catalog (?catalog=1)
   features/
     auth/        authService, authStore, validation, titles
     color-mixer/ mixer (spectral), solver (+worker, +client), advisor, referencePaints, mixStore
@@ -50,13 +50,13 @@ src/
 supabase/migrations/0001_init.sql    scripts/generate-icons.mjs    specs/    .claude/commands/
 ```
 - **Átomos:** PixelButton, PixelIconButton, PixelText, PixelPanel (con barra de título), PixelInput, PixelIcon (8×8), PixelJar (frasco), PixelLogo, PixelSparkle, PixelMeter, PixelBar, ColorSwatch. Los dibujos pixel viven en el `grid.js` de cada átomo.
-- **Moléculas:** TweakControl, Drawer, ColorWheel, PhotoPicker, PhotoViewport (zoom), PhotoCropper, PhotoColorPicker, ColorPreview, PaintCard, PaintForm, PaintAdvice, OptionGroup, StepIndicator, TabBar, RecipeRow, ColorCompare, MixingAnimation, InfoSheet, SaveRecipe, RecipeNameForm, RecipeCard, AuthField.
-- **Organismos:** TweakSheet, TargetColorPicker, PaintsStep, PaintCapture, PaintList, MixResult, RecipeLibrary, RecipeDetail, AuthForm. **Plantilla:** AppShell.
+- **Moléculas:** PlanAdvice, PartsStepper, EditableRecipeRow, PaintPicker, TweakControl, Drawer, ColorWheel, PhotoPicker, PhotoViewport (zoom), PhotoCropper, PhotoColorPicker, ColorPreview, PaintCard, PaintForm, PaintAdvice, OptionGroup, StepIndicator, TabBar, RecipeRow, ColorCompare, MixingAnimation, InfoSheet, SaveRecipe, RecipeNameForm, RecipeCard, AuthField.
+- **Organismos:** RecipeEditor, TweakSheet, TargetColorPicker, PaintsStep, PaintCapture, PaintList, MixResult, RecipeLibrary, RecipeDetail, AuthForm. **Plantilla:** AppShell.
 
 ## Estructura de app (pantalla completa)
 - Toda pantalla con sesión usa **`AppShell`**: barra superior de **48 px** (☰/atrás, título, pasos), contenido con su propio scroll y **barra de pestañas de 56 px** (Recetas · Crear · Cuenta), más la zona segura del teléfono. **La página nunca hace scroll ni rebota** (`html/body overflow:hidden`, `overscroll-behavior:none`); solo scrollea el contenido. No cambiar el alto de las barras ni agregar scroll de página.
 - **Navegación (spec 013):** barra inferior **Recetas · Crear (central, elevado ~5 px) · Cuenta**; la barra superior lleva **☰** (abre el `Drawer`) o ← en el detalle de receta. El `Drawer` (molécula) sale de `features/navigation/menuItems.js` (agregar secciones/ítems ahí; los `disabled` son "próximamente"); estado en `navigationStore`; se cierra con afuera/Esc/Atrás/arrastre y usa `InfoSheet/historyGuard`. Elegir un ítem cierra y **después** navega. Gesto de borde: `hooks/useEdgeSwipe` (eventos táctiles en `document`, ≤16 px del borde; Pointer Events fallaban); ignora `[data-no-edge-swipe]` (la foto).
-- **Rutas por hash:** `#/` Crear, `#/recetas`, `#/recetas/<id>`, `#/pinturas` (Mis pinturas, sin pestaña), `#/cuenta`. Cambiar de pestaña **no pierde** el asistente (el estado vive en los stores). La pantalla de acceso no lleva pestañas.
+- **Rutas por hash:** `#/` Crear, `#/recetas`, `#/recetas/<id>`, `#/recetas/<id>/editar`, `#/pinturas` (Mis pinturas, sin pestaña), `#/cuenta`. Cambiar de pestaña **no pierde** el asistente (el estado vive en los stores). La pantalla de acceso no lleva pestañas.
 - **Escala compacta:** textos 9–20 px (cuerpo 15 px), bordes 2 px, sombras 3 px. Los botones **se ven de 40 px (34 px los chicos) pero responden como 44 px** con un `::after` invisible. **Al calcular ese `::after`, restar el borde** (`inset` se mide desde el borde interno). Patrón en `PixelButton` y `PixelIconButton`; mantenerlo en controles nuevos (`hitBias="up"` si abajo hay botones pegados).
 - El texto de la interfaz no se selecciona (`user-select:none`); los inputs sí. Sin zoom por doble toque (`touch-action: manipulation`).
 - **El paso 1 debe entrar sin scroll** (Rueda: 360×640, 390×844, 360×560; Foto: 360×640 y 390×844). Cualquier cambio de tamaño ahí se vuelve a medir.
@@ -68,6 +68,8 @@ supabase/migrations/0001_init.sql    scripts/generate-icons.mjs    specs/    .cl
 - `advisor`: `adviseBasePaints` (qué bases usar para el objetivo), `matchPaints` (cuáles ya tiene el usuario, ΔE ≤ 30, una pintura no cubre dos bases), `suggestAdditions` (qué sumar si ΔE ≥ 5; mejora ≥ 3 o sube de categoría), `diagnose` (por qué falta: blanco/negro/tono).
 - **Pinturas base estándar** (`referencePaints.js`, `standard: true`): Rojo `#e4002b`, Amarillo `#fcd116`, Azul `#1d3fbb`, Blanco `#ffffff`, Negro `#141414`. Ajustarlas ahí si los consejos no se parecen a la realidad.
 - **Ajustar (spec 016):** `tweak.js` — `shiftTarget(hex, {light, vivid})` corre la claridad (Lab L ±4 por paso) y el croma (×1,12 por paso) del objetivo; `solve({…, aim})` ordena/elige por la distancia a `aim` pero `deltaE`/`quality` se miden contra el objetivo real (`aimDeltaE` solo existe con `aim`; `rankOf` ordena). `mixStore.tweak` (±3, entra en `resultKey` solo si no es neutro) se reinicia al cambiar de objetivo/`remix`/`reset`. UI: botón "Ajustar" → `TweakSheet` (usa `InfoSheet`, `TweakControl` por eje) + chip "Ajustada: …". `describeNeeds` traduce `diagnose` a "te falta blanco/negro…". La receta guardada es la ajustada (sin migración).
+- **Consejo completo (spec 017):** `advisor.planMissingPaints(target, paints, {maxParts})` prueba sumar 1, 2 y hasta 3 bases que faltan **juntas** (no de a una) y devuelve el conjunto más chico que llega a ΔE < 5 o el que más se acerca: `{ roles, recipe, deltaE, quality, enough }` (`roles` vacío = nada mejora). Tope de 10 partes (con 16 tardaba ~1,5 s). `describePlan` arma la frase ("te faltan: Amarillo y Azul…"). Corre en el Worker (`kind: 'plan'`, `planAsync`) y se guarda en `mixStore.result.plan` junto a `suggestions`. Se muestra con `PlanAdvice` ("Agregar todos") en el paso 3, el panel Ajustar y el selector del editor; con plan, el aviso del paso 3 muestra solo el plan.
+- **Editor de recetas (spec 017):** `features/recipes/editor.js` — borrador `[{name,hex,parts}]` con `editorReducer` (bump/remove/add/lighten/darken/undo/reset/saved; 6 pinturas, 1–20 partes, 30 deshacer). "Más claro/oscuro" = +1 parte de Blanco/Negro estándar. Guardar cambios: `recipesStore.updateMix(id, {mix, result_hex})` (el `target_hex` no cambia; sin migración, RLS `recipes_update_own`); "Guardar como copia": `add`. `hooks/useLeaveGuard` pregunta antes de salir con cambios sin guardar (enlaces `#/`, Atrás, cierre de pestaña).
 - Límites: **2–6 pinturas por mezcla** (`MIN/MAX_SELECTED` en `paintsStore`; las sumadas con "+" cuentan); recetas guardadas hasta 12 pinturas en la base (las reales ≤ 4).
 - `mixStore` guarda: paso, color objetivo (+ miniatura en memoria), precisión, `recipeKey` (`recommended`|`best`), `result` (con clave `resultKey`: un resultado de otros datos no se muestra), `extraPaints` (estándar sumadas en el paso 3; se descartan al cambiar el objetivo), `savedRecipes` (firma → id, evita duplicar). `reset()` limpia todo.
 
@@ -92,7 +94,7 @@ supabase/migrations/0001_init.sql    scripts/generate-icons.mjs    specs/    .cl
 2. El usuario aprueba ("aprobado", "con las opciones propuestas") o pide cambios → pasa a `aprobado`. Si cambia de idea, se actualiza el spec o se crea uno nuevo.
 3. `/implement NNN` → implementa **solo** lo del spec, con tests; corre `npm test`, `npm run lint` y `npm run build`; marca los criterios cumplidos con honestidad (los que no se pudieron comprobar quedan explicados) y pasa el estado a `implementado`. **No hace commit.**
 4. `/ship` → revisa estado/diff/secretos, corre tests y build, **muestra resumen y mensaje de commit y espera confirmación explícita** ("sí, confirmo") antes de `git commit` y `git push`.
-- **Nunca implementar sin spec aprobado.** Trabajo nuevo = spec nuevo (el siguiente número es **017**; el 014, onboarding, está en borrador).
+- **Nunca implementar sin spec aprobado.** Trabajo nuevo = spec nuevo (el siguiente número es **018**; el 014, onboarding, está en borrador).
 - Al terminar cada implementación: resumen corto de qué cambió, qué se midió y **qué falta probar en el teléfono**.
 
 ## Git y commits
@@ -131,6 +133,7 @@ supabase/migrations/0001_init.sql    scripts/generate-icons.mjs    specs/    .cl
 | 013 | Navegación nativa: barra con Crear central, ☰ + menú lateral (drawer), Mis pinturas (`#/pinturas`), gesto de borde |
 | 015 | Paso 3 con scroll natural: zona de resultado con alto mínimo, lista sin scroll propio, degradé "hay más abajo" |
 | 016 | Ajustar la mezcla: Luz e Intensidad (±3 pasos) con panel, y qué sumar |
+| 017 | Editar recetas guardadas (`#/recetas/<id>/editar`) y consejo completo de colores (`planMissingPaints`) |
 
 ## Ideas posibles (no especificadas todavía)
 Calculador de cantidades ("quiero 100 ml"), búsqueda y filtros en la biblioteca, compartir/exportar recetas, calibrar con la mezcla real del usuario, volver a mostrar recetas alternativas, subir el límite de resolución de la foto, botón "Instalar app" dentro de Cuenta, paginación de recetas, modo oscuro, login con Google.
