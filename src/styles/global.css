@@ -1,13 +1,24 @@
 *, *::before, *::after { box-sizing: border-box; }
 
 html {
+  height: 100%;
   -webkit-text-size-adjust: 100%;
   -webkit-tap-highlight-color: transparent;
+  /* Comportamiento de app: la página nunca hace scroll ni rebota; el scroll es solo del contenido */
+  overflow: hidden;
+  overscroll-behavior: none;
 }
 
 body {
   margin: 0;
-  min-height: 100dvh;
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+  /* el texto de la interfaz no se selecciona ni muestra el menú de pulsación larga (los campos sí, abajo) */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: manipulation; /* sin zoom por doble toque */
   background-color: var(--color-bg);
   /* damero de puntos muy suave (dither) que da textura sin competir con los colores del usuario */
   background-image:
@@ -19,10 +30,11 @@ body {
   font-family: var(--font-body);
   font-size: var(--text-body);
   line-height: var(--leading-body);
-  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 
-#root { min-height: 100dvh; }
+#root { height: 100%; }
+
+input, textarea { user-select: text; -webkit-user-select: text; }
 
 img, canvas, svg { image-rendering: pixelated; max-width: 100%; }
 

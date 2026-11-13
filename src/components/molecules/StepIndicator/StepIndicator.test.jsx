@@ -24,4 +24,11 @@ describe('StepIndicator', () => {
     rerender(<StepIndicator step={3} total={3} />)
     expect(screen.getAllByRole('listitem').map((li) => li.dataset.state)).toEqual(['done', 'done', 'current'])
   })
+
+  it('la variante compacta conserva los estados y el texto accesible', () => {
+    const { container } = render(<StepIndicator step={2} total={3} compact />)
+    expect(container.querySelector('ol')).toHaveAttribute('data-compact')
+    expect(screen.getAllByRole('listitem').map((li) => li.dataset.state)).toEqual(['done', 'current', 'pending'])
+    expect(screen.getByText('Paso 2 de 3')).toBeInTheDocument()
+  })
 })

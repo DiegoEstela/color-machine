@@ -3,6 +3,7 @@ import { supabase } from '../storage/supabase.js'
 import { onAuthChange } from './authService.js'
 import { usePaintsStore } from '../paints/paintsStore.js'
 import { useMixStore } from '../color-mixer/mixStore.js'
+import { useRecipesStore } from '../recipes/recipesStore.js'
 
 /** status: 'loading' | 'signedIn' | 'signedOut' | 'unconfigured' */
 export const useAuthStore = create((set, get) => ({
@@ -20,6 +21,7 @@ export const useAuthStore = create((set, get) => ({
       // Al cerrar sesión no deben quedar datos del usuario anterior en memoria.
       if (event === 'SIGNED_OUT') {
         usePaintsStore.getState().reset()
+        useRecipesStore.getState().reset()
         useMixStore.getState().reset()
       }
       set({

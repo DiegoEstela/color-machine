@@ -98,3 +98,26 @@ describe('mixStore: cálculo de recetas', () => {
     expect(s()).toMatchObject({ result: null, maxParts: 10 })
   })
 })
+
+describe('mixStore: recetas guardadas y "mezclar otra vez"', () => {
+  it('recuerda qué recetas ya se guardaron y reset las olvida', () => {
+    s().markSaved('firma-1', 'id-1')
+    expect(s().savedRecipes).toEqual({ 'firma-1': 'id-1' })
+    s().markSaved('firma-2', 'id-2')
+    expect(Object.keys(s().savedRecipes)).toHaveLength(2)
+    s().reset()
+    expect(s().savedRecipes).toEqual({})
+  })
+
+  it('remix usa el color como objetivo, vacía el resultado y va al paso 2', () => {
+    useMixStore.setState({ step: 3, targetColor: '#111111', targetThumb: 'data:x', result: { key: 'k' } })
+    s().remix('#5B2A86')
+    expect(s()).toMatchObject({ step: 2, targetColor: '#5b2a86', targetThumb: null, result: null, recipeKey: 'recommended' })
+  })
+
+  it('remix ignora un color inválido', () => {
+    useMixStore.setState({ step: 3, targetColor: '#111111' })
+    s().remix('nope')
+    expect(s()).toMatchObject({ step: 3, targetColor: '#111111' })
+  })
+})

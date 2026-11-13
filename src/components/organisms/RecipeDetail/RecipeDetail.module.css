@@ -1,0 +1,8 @@
+.root { display: flex; flex-direction: column; gap: var(--space-3); }
+.head { display: flex; flex-direction: column; gap: var(--space-1); overflow-wrap: anywhere; }
+.rows { display: flex; flex-direction: column; gap: var(--space-1); margin: 0; padding: 0; }
+.info { display: flex; align-items: flex-start; gap: var(--space-2); }
+.info > svg { flex: none; margin-top: 2px; }
+.actions { display: flex; flex-direction: column; gap: var(--space-2); }
+.row { display: flex; gap: var(--space-2); }
+.row > button { flex: 1 1 0; min-width: 0; }

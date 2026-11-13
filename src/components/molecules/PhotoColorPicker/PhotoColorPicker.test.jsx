@@ -10,8 +10,16 @@ vi.mock('../../../lib/image.js', async (importOriginal) => ({
 
 const file = new File(['x'], 'foto.png', { type: 'image/png' })
 let restore
-beforeEach(() => { restore = mockStageSize(200, 100) })
-afterEach(() => restore())
+// Reloj controlado: `performance.now()` solo avanza cuando el test lo pide, así los toques y dobles toques
+// no dependen de la velocidad de la máquina.
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ['performance'] })
+  restore = mockStageSize(200, 100)
+})
+afterEach(() => {
+  restore()
+  vi.useRealTimers()
+})
 
 async function setup() {
   loadImageToCanvas.mockResolvedValueOnce({ width: 100, height: 50 })

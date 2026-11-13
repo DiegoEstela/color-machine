@@ -1,0 +1,15 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  list-style: none;
+  background: var(--color-surface);
+  border: var(--border-w) solid var(--color-line);
+  box-shadow: var(--shadow-pixel);
+}
+.main { display: flex; align-items: center; gap: var(--space-3); min-height: var(--touch-min); padding: 0; text-align: left; background: none; border: 0; cursor: pointer; }
+.jars { display: flex; align-items: center; gap: var(--space-1); flex: none; }
+.jars > svg:nth-child(2) { transform: scaleX(-1); color: var(--color-ink-soft); } /* flecha hacia la derecha */
+.text { display: flex; flex-direction: column; gap: var(--space-1); flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.actions { display: flex; gap: var(--space-2); justify-content: flex-end; }

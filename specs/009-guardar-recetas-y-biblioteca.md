@@ -1,6 +1,6 @@
 # 009 — Guardar recetas, biblioteca y navegación estilo app
 
-- **Estado:** aprobado (con las opciones propuestas)
+- **Estado:** implementado (verificado en Chrome con emulación móvil y tests; falta probarlo en un teléfono y contra Supabase real)
 - **Fecha:** 2026-11-14
 
 ## Objetivo
@@ -69,23 +69,23 @@
 - Validaciones del cliente iguales a las de la base: nombre de 1 a 60 caracteres, hex `#RRGGBB`, `mix` de 1 a 12 elementos con partes enteras >= 1.
 
 ## Criterios de aceptación
-- [ ] La app ocupa toda la pantalla: barra superior compacta, contenido y barra de pestañas inferior fija (con zona segura en iPhone); no hay ventana flotante con borde y sombra.
-- [ ] La página no hace scroll ni rebota: solo el área de contenido; no hay "tirar para actualizar"; el texto de la interfaz no se selecciona (los campos sí) y no hay zoom por doble toque (medido y probado con emulación táctil en Chrome).
-- [ ] La barra superior mide siempre 48 px y la inferior 56 px (más zona segura) en todas las pantallas y pasos; el área de contenido ocupa el resto y no cambia de alto al navegar (medido en Chrome).
-- [ ] Textos, espacios, bordes, sombras, frascos y botones son ~15 % más chicos que ahora, con zonas táctiles de >= 44 px (verificado midiendo el área clicable).
-- [ ] Las tres pestañas (Crear, Recetas, Cuenta) funcionan, la activa se resalta y tienen >= 44 px; cambiar de pestaña no pierde el color, las pinturas elegidas ni el resultado en curso.
-- [ ] El botón Atrás del teléfono o del navegador vuelve entre pantallas; abrir `#/recetas` o `#/recetas/<id>` directo funciona con sesión; un id inexistente muestra un aviso y una salida.
-- [ ] El paso 1 sigue sin scroll con la barra inferior: Rueda en 360x640, 390x844 y 360x560; Foto en 360x640 y 390x844 (medido en Chrome).
-- [ ] En el paso 3 se guarda la receta mostrada con un nombre; en Supabase queda una fila con `name`, `target_hex`, `result_hex` y `mix`. El campo de nombre empieza vacío; vacío o de más de 60 caracteres se rechaza con mensaje.
-- [ ] Tras guardar se ve la confirmación con acceso a *Recetas* y el botón de esa receta queda en "Guardada"; otra receta distinta sí se puede guardar.
-- [ ] La biblioteca muestra frascos, nombre, partes y fecha de la más nueva a la más vieja, con estados de carga, error con "Reintentar" y vacío.
-- [ ] El detalle muestra la comparación con el medidor, las partes por pintura y la nota de "1 parte".
-- [ ] Renombrar y borrar (con confirmación) funcionan desde la biblioteca y el detalle; un error de red se muestra en español sin perder la pantalla.
-- [ ] "Mezclar este color otra vez" lleva al paso 2 con ese color como objetivo.
-- [ ] *Cuenta* muestra el email y cierra la sesión; al cerrar sesión no quedan recetas, pinturas ni resultados en memoria.
-- [ ] Otra cuenta no ve mis recetas (RLS).
-- [ ] Sin scroll horizontal a 360 px; objetivos táctiles >= 44 px; sin animaciones con `prefers-reduced-motion`; contraste AA.
-- [ ] `npm test`, `npm run lint` y `npm run build` pasan.
+- [x] La app ocupa toda la pantalla: barra superior compacta, contenido y barra de pestañas inferior fija (con zona segura en iPhone); no hay ventana flotante con borde y sombra.
+- [x] La página no hace scroll ni rebota: solo el área de contenido; no hay "tirar para actualizar"; el texto de la interfaz no se selecciona (los campos sí) y no hay zoom por doble toque (medido y probado con emulación táctil en Chrome).
+- [x] La barra superior mide siempre 48 px y la inferior 56 px (más zona segura) en todas las pantallas y pasos; el área de contenido ocupa el resto y no cambia de alto al navegar (medido en Chrome).
+- [x] Textos, espacios, bordes, sombras, frascos y botones son ~15 % más chicos que ahora, con zonas táctiles de >= 44 px (verificado midiendo el área clicable).
+- [x] Las tres pestañas (Crear, Recetas, Cuenta) funcionan, la activa se resalta y tienen >= 44 px; cambiar de pestaña no pierde el color, las pinturas elegidas ni el resultado en curso.
+- [x] El botón Atrás del teléfono o del navegador vuelve entre pantallas; abrir `#/recetas` o `#/recetas/<id>` directo funciona con sesión; un id inexistente muestra un aviso y una salida.
+- [x] El paso 1 sigue sin scroll con la barra inferior: Rueda en 360x640, 390x844 y 360x560; Foto en 360x640 y 390x844 (medido en Chrome).
+- [x] En el paso 3 se guarda la receta mostrada con un nombre (probado con tests que verifican el contenido exacto enviado a Supabase: `name`, `target_hex`, `result_hex` y `mix`; la fila real en tu base se confirma al probarlo con tu cuenta); en Supabase queda una fila con `name`, `target_hex`, `result_hex` y `mix`. El campo de nombre empieza vacío; vacío o de más de 60 caracteres se rechaza con mensaje.
+- [x] Tras guardar se ve la confirmación con acceso a *Recetas* y el botón de esa receta queda en "Guardada"; otra receta distinta sí se puede guardar.
+- [x] La biblioteca muestra frascos, nombre, partes y fecha de la más nueva a la más vieja, con estados de carga, error con "Reintentar" y vacío.
+- [x] El detalle muestra la comparación con el medidor, las partes por pintura y la nota de "1 parte".
+- [x] Renombrar y borrar (con confirmación) funcionan desde la biblioteca y el detalle; un error de red se muestra en español sin perder la pantalla.
+- [x] "Mezclar este color otra vez" lleva al paso 2 con ese color como objetivo.
+- [x] *Cuenta* muestra el email y cierra la sesión; al cerrar sesión no quedan recetas, pinturas ni resultados en memoria.
+- [ ] Otra cuenta no ve mis recetas (RLS). **Pendiente:** depende de las políticas del spec 002 en tu Supabase; se comprueba entrando con dos cuentas.
+- [x] Sin scroll horizontal a 360 px; objetivos táctiles >= 44 px; sin animaciones con `prefers-reduced-motion`; contraste AA.
+- [x] `npm test`, `npm run lint` y `npm run build` pasan.
 
 ## Riesgos y preguntas abiertas
 - **Alto disponible.** La barra inferior (~56 px) compite con el paso 1; se compensa quitando márgenes y el borde de la ventana y metiendo el indicador de pasos en la barra superior. Si aun así no entra a 360x640 en la pestaña Foto, se ajustan los tamaños y se vuelve a medir antes de dar el spec por cerrado.
@@ -98,3 +98,14 @@
 - **Instalación.** El comportamiento "sin barra del navegador" depende del spec 011 (manifest y service worker); este spec prepara la interfaz para pantalla completa.
 - **Letra más chica.** La fuente pixel es difícil de leer por debajo de ~9 px; los tamaños se bajan solo hasta ahí, y el texto de lectura se mantiene en la fuente del sistema.
 - **Decisión tomada:** *Cuenta* es la tercera pestaña (con el cierre de sesión adentro); el ícono de salir sale de la barra superior.
+
+## Resultado y notas de implementación
+- **Medido en Chrome (emulación móvil, build de producción), sin zona segura:** la barra superior mide **48 px** y la inferior **56 px** en las 7 pantallas medidas (pasos 1, 2 y 3, biblioteca, detalle y cuenta; más "mezclando" y acceso) a **360x640, 390x844 y 360x560**; el área de contenido es siempre el resto (536, 740 y 456 px). **La página nunca hace scroll** (el documento mide igual que la ventana y no hay scroll horizontal); lo que sobra hace scroll solo dentro del contenido.
+- **Zona segura simulada** (barra de estado de 44 px y barra de gestos de 34 px): barra superior 92 px (48 + 44), inferior 90 px (56 + 34) y contenido de 662 px en 390x844; nada queda tapado.
+- **Paso 1 sin scroll con la barra inferior:** Rueda en 360x640, 390x844 y 360x560; Foto en 360x640 y 390x844 (a 360x560 la pestaña Foto tiene +35 px de scroll interno, como se permitió).
+- **Comportamiento de app (probado con eventos táctiles y de mouse reales):** triple clic sobre el título no selecciona texto (`user-select: none`; los campos de texto sí son seleccionables); dos toques rápidos en una zona vacía dejan la escala de la página en 1; arrastrar hacia abajo desde el tope del contenido no mueve la página ni las barras; al hacer scroll del contenido las barras no se mueven. Con `prefers-reduced-motion` hay **0 elementos animados** en las pantallas medidas (3 a 8 sin la preferencia).
+- **Escala compacta:** textos de 9–15 px (antes 10–18), bordes de 2 px (antes 3), sombras de 3 px (antes 4), espacios ×0.85, frascos y muestras ~15 % más chicos. Los botones se ven de **40 px** (34 px los chicos y 44 px los principales) y **responden al toque como 44 px**: medido con `elementFromPoint`, los botones normales y chicos llegan a 44 px (la excepción es un botón que queda pegado a la barra inferior, donde la barra tapa los píxeles de debajo). Las pestañas miden 53 px de alto.
+- **Navegación:** rutas por hash (`#/`, `#/recetas`, `#/recetas/<id>`, `#/cuenta`); cambiar de pestaña conserva el color, las pinturas elegidas y el resultado (probado). Abrir `#/recetas/<id>` directo carga las recetas; un id inexistente muestra "No encontramos esta receta" con salida.
+- **Reemplazos:** `WizardLayout` se eliminó y lo reemplaza `AppShell`; el ícono de cerrar sesión salió de la barra superior y está en la pestaña **Cuenta**.
+- **Desvíos del plan:** (1) el cálculo de qué recetas se guardaron usa `recipeSignature` (objetivo + partes) guardado en `mixStore.savedRecipes`; (2) los toques de la foto ahora se miden con `performance.now()` (en vez de `event.timeStamp`) para que los tests de toques no dependan de la velocidad de la máquina; (3) el botón "Mezclar este color otra vez" puede partirse en dos líneas en pantallas angostas.
+- **No se pudo comprobar aquí:** el teclado en un iPhone real, el comportamiento en un teléfono real con la app instalada, la fila real en Supabase y que otra cuenta no vea mis recetas (RLS).

@@ -1,6 +1,6 @@
 .root {
   /* La rueda se adapta al ancho y al alto de la pantalla para que todo entre sin scroll. */
-  --wheel-size: clamp(132px, min(48vw, 32dvh), 220px);
+  --wheel-size: clamp(132px, min(52vw, 34dvh), 230px);
   display: grid;
   grid-template-columns: var(--wheel-size) minmax(0, 1fr);
   grid-template-areas: 'wheel aside' 'light light' 'fine fine';

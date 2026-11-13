@@ -1,14 +1,23 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { useRecipesStore } from '../../../features/recipes/recipesStore.js'
 import { MixResult } from '../index.js'
 import { useMixStore } from '../../../features/color-mixer/mixStore.js'
 import { mixHex } from '../../../features/color-mixer/mixer.js'
 import { BASE_PAINTS } from '../../../features/color-mixer/referencePaints.js'
 
+const repo = vi.hoisted(() => ({ create: vi.fn(), list: vi.fn(), update: vi.fn(), remove: vi.fn() }))
+vi.mock('../../../features/storage/recipesRepo.js', () => ({ recipesRepo: repo }))
+
 const [rojo, , azul, blanco] = BASE_PAINTS
 const paints = [rojo, azul]
 const target = mixHex([{ hex: rojo.hex, parts: 1 }, { hex: azul.hex, parts: 2 }])
 
-beforeEach(() => useMixStore.getState().reset())
+beforeEach(() => {
+  useMixStore.getState().reset()
+  useRecipesStore.getState().reset()
+  Object.values(repo).forEach((fn) => fn.mockReset())
+  window.location.hash = ''
+})
 
 const ready = () => screen.findByRole('img', { name: /^Tu mezcla #/ }, { timeout: 3000 })
 
@@ -100,5 +109,90 @@ describe('MixResult', () => {
     rerender(<MixResult target="#2a9d8f" paints={paints} onAddPaint={() => {}} />)
     expect(screen.getByRole('status')).toHaveTextContent('Mezclando...')
     await waitFor(() => expect(screen.getByRole('img', { name: 'Tu color #2a9d8f' })).toBeInTheDocument(), { timeout: 3000 })
+  })
+})
+
+describe('MixResult: guardar la receta', () => {
+  const open = async () => {
+    render(<MixResult target={target} paints={paints} onAddPaint={() => {}} />)
+    await ready()
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar receta' }))
+  }
+  const type = (v) => fireEvent.change(screen.getByLabelText('Nombre de la receta'), { target: { value: v } })
+
+  it('cada receta tiene un botón "Guardar receta" con el nombre vacío', async () => {
+    await open()
+    expect(screen.getByLabelText('Nombre de la receta')).toHaveValue('')
+  })
+
+  it('guarda una copia de la receta mostrada: nombre, colores y partes de cada pintura', async () => {
+    repo.create.mockResolvedValue({ data: { id: 'nuevo', name: 'Mi violeta' }, error: null })
+    await open()
+    type('  Mi violeta ')
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }))
+    await waitFor(() => expect(repo.create).toHaveBeenCalledTimes(1))
+    const payload = repo.create.mock.calls[0][0]
+    expect(payload).toMatchObject({ name: 'Mi violeta', target_hex: target })
+    expect(payload.result_hex).toMatch(/^#[0-9a-f]{6}$/)
+    expect(payload.mix).toEqual([
+      { name: 'Rojo', hex: rojo.hex, parts: 1 },
+      { name: 'Azul', hex: azul.hex, parts: 2 },
+    ])
+    expect(Object.keys(payload).sort()).toEqual(['mix', 'name', 'result_hex', 'target_hex'])
+  })
+
+  it('tras guardar muestra la confirmación y el botón queda en "Guardada"', async () => {
+    repo.create.mockResolvedValue({ data: { id: 'nuevo', name: 'x' }, error: null })
+    await open()
+    type('Mi violeta')
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }))
+    expect(await screen.findByText('¡Receta guardada!')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Guardada' })).toBeDisabled()
+    expect(useRecipesStore.getState().recipes.map((r) => r.id)).toEqual(['nuevo'])
+    expect(Object.values(useMixStore.getState().savedRecipes)).toEqual(['nuevo'])
+  })
+
+  it('no se puede guardar dos veces la misma receta (la señal persiste al volver a la pantalla)', async () => {
+    repo.create.mockResolvedValue({ data: { id: 'nuevo', name: 'x' }, error: null })
+    const { unmount } = render(<MixResult target={target} paints={paints} onAddPaint={() => {}} />)
+    await ready()
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar receta' }))
+    type('Una vez')
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }))
+    await screen.findByText('¡Receta guardada!')
+    unmount()
+    render(<MixResult target={target} paints={paints} onAddPaint={() => {}} />)
+    await ready()
+    expect(screen.queryByRole('button', { name: 'Guardar receta' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Guardada' })).toBeDisabled()
+    expect(repo.create).toHaveBeenCalledTimes(1)
+  })
+
+  it('rechaza el nombre vacío sin llamar a la base', async () => {
+    await open()
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }))
+    expect(screen.getByText('Ponele un nombre a la receta.')).toBeInTheDocument()
+    expect(repo.create).not.toHaveBeenCalled()
+  })
+
+  it('un error de la base se muestra en español y permite reintentar', async () => {
+    repo.create.mockResolvedValueOnce({ data: null, error: { code: 'offline', message: 'Sin conexión. Revisá tu internet y volvé a intentar.' } })
+    await open()
+    type('Violeta')
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Sin conexión')
+    expect(screen.queryByText('¡Receta guardada!')).not.toBeInTheDocument()
+    repo.create.mockResolvedValueOnce({ data: { id: 'n2', name: 'Violeta' }, error: null })
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }))
+    expect(await screen.findByText('¡Receta guardada!')).toBeInTheDocument()
+  })
+
+  it('"Ver mis recetas" lleva a la biblioteca', async () => {
+    repo.create.mockResolvedValue({ data: { id: 'nuevo', name: 'x' }, error: null })
+    await open()
+    type('Violeta')
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Ver mis recetas' }))
+    expect(window.location.hash).toBe('#/recetas')
   })
 })

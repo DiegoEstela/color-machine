@@ -19,7 +19,7 @@ export default function PixelButton({
       className={styles.button}
       {...rest}
     >
-      {icon && <PixelIcon name={icon} size={16} />}
+      {icon && <PixelIcon name={icon} size={14} />}
       {children}
     </button>
   )

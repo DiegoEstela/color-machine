@@ -17,6 +17,7 @@ export const useMixStore = create((set, get) => ({
   maxParts: DEFAULT_MAX_PARTS,
   recipeKey: 'recommended', // 'recommended' | 'best' | 'others'
   result: null, // { key, status: 'mixing' | 'ready' | 'error', data, suggestions }
+  savedRecipes: {}, // firma de receta (objetivo + partes) → id guardado, para no duplicar en la sesión
 
   /** Guarda el color objetivo (hex normalizado). Ignora valores inválidos. */
   setTarget(hex) {
@@ -27,6 +28,16 @@ export const useMixStore = create((set, get) => ({
   setTargetThumb: (thumb) => set({ targetThumb: thumb ?? null }),
 
   setMaxParts: (maxParts) => set({ maxParts }),
+
+  /** Recuerda que esta receta ya se guardó (clave = `recipeSignature`). */
+  markSaved: (signature, id) => set((s) => ({ savedRecipes: { ...s.savedRecipes, [signature]: id } })),
+
+  /** "Mezclar este color otra vez": usa el color de una receta como objetivo y va a elegir pinturas (paso 2). */
+  remix(hex) {
+    const color = normalizeHex(hex)
+    if (!color) return
+    set({ targetColor: color, targetThumb: null, step: 2, result: null, recipeKey: 'recommended' })
+  },
 
   selectRecipe: (recipeKey) => set({ recipeKey }),
 
@@ -61,5 +72,5 @@ export const useMixStore = create((set, get) => ({
 
   back: () => set((s) => ({ step: Math.max(1, s.step - 1) })),
 
-  reset: () => set({ step: 1, targetColor: null, targetThumb: null, maxParts: DEFAULT_MAX_PARTS, recipeKey: 'recommended', result: null }),
+  reset: () => set({ step: 1, targetColor: null, targetThumb: null, maxParts: DEFAULT_MAX_PARTS, recipeKey: 'recommended', result: null, savedRecipes: {} }),
 }))

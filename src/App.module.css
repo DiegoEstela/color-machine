@@ -1,1 +1,1 @@
-.center { display: grid; place-items: center; min-height: 100dvh; padding: var(--space-4); }
+.center { display: grid; place-items: center; height: 100%; padding: var(--space-4); }

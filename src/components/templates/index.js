@@ -1,1 +1,1 @@
-export { default as WizardLayout } from './WizardLayout/WizardLayout.jsx'
+export { default as AppShell } from './AppShell/AppShell.jsx'

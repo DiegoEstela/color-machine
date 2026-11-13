@@ -4,8 +4,16 @@ import { PhotoViewport } from '../index.js'
 import { finger, mockFrameRect, mockStageSize, viewportParts } from '../../../test-utils/photoMocks.js'
 
 let restore
-beforeEach(() => { restore = mockStageSize(200, 100) })
-afterEach(() => restore())
+// Reloj controlado: `performance.now()` solo avanza cuando el test lo pide, así los toques y dobles toques
+// no dependen de la velocidad de la máquina.
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ['performance'] })
+  restore = mockStageSize(200, 100)
+})
+afterEach(() => {
+  restore()
+  vi.useRealTimers()
+})
 
 function setup(props = {}) {
   const canvasRef = createRef()
@@ -95,6 +103,32 @@ describe('PhotoViewport', () => {
     const p = onTap.mock.calls[0][0]
     expect(p.x).toBeCloseTo(175 / 450, 6)
     expect(p.y).toBeCloseTo(0.5, 6)
+  })
+
+  it('mantener apretado mucho tiempo sin moverse no cuenta como toque', () => {
+    const { frame, onTap } = setup()
+    fireEvent.pointerDown(frame, finger(1, 50, 25))
+    vi.advanceTimersByTime(700)
+    fireEvent.pointerUp(frame, finger(1, 50, 25))
+    expect(onTap).not.toHaveBeenCalled()
+  })
+
+  it('dos toques separados por más de 300 ms no son un doble toque', () => {
+    const { frame, onTap, container } = setup()
+    const tap = () => { fireEvent.pointerDown(frame, finger(1, 100, 50)); fireEvent.pointerUp(frame, finger(1, 100, 50)) }
+    tap()
+    vi.advanceTimersByTime(400)
+    tap()
+    expect(viewportParts(container).scale).toBe(1)
+    expect(onTap).toHaveBeenCalledTimes(2)
+  })
+
+  it('dos toques lejos uno del otro no son un doble toque', () => {
+    const { frame, container } = setup()
+    fireEvent.pointerDown(frame, finger(1, 20, 20)); fireEvent.pointerUp(frame, finger(1, 20, 20))
+    vi.advanceTimersByTime(100)
+    fireEvent.pointerDown(frame, finger(1, 150, 80)); fireEvent.pointerUp(frame, finger(1, 150, 80))
+    expect(viewportParts(container).scale).toBe(1)
   })
 
   it('un arrastre mueve la foto y no cuenta como toque', () => {

@@ -20,6 +20,12 @@ Vite + React (JavaScript, sin TypeScript) · Zustand (estado) · CSS Modules + t
 
 Librerías de color: `culori` (conversiones y distancia ΔE) y `spectral.js` (mezcla de pigmentos tipo Kubelka-Munk, MIT). No usar Mixbox (licencia no comercial).
 
+## Estructura de app
+- Toda pantalla de la sesión usa la plantilla `AppShell`: barra superior de **48 px**, contenido con su propio scroll y barra de pestañas inferior de **56 px** (más la zona segura del teléfono). La página nunca hace scroll: solo el contenido (`overscroll-behavior: none`). No agregar scroll de página ni alturas que cambien las barras.
+- Rutas por hash (`features/navigation/useRoute.js`): `#/` Crear, `#/recetas`, `#/recetas/<id>`, `#/cuenta`. Cambiar de pestaña no pierde el estado del asistente (vive en los stores).
+- Escala compacta: textos de 9 a 20 px, bordes de 2 px y sombras de 3 px. Los botones se ven de 40 px (34 px los chicos) pero **responden como 44 px** gracias a un `::after` invisible (`PixelButton`); mantener ese patrón en controles nuevos.
+- El texto de la interfaz no se selecciona (`user-select: none`); los campos de texto sí.
+
 ## PWA (app instalable)
 - Config en `src/pwa/pwaConfig.js` (manifest y service worker), conectada en `vite.config.js`. El service worker **no se activa en desarrollo**: para probarlo, `npm run build && npx vite preview`.
 - **Nunca cachear Supabase** (datos ni sesión): todo lo que no sea del propio origen va a la red (`NetworkOnly`).

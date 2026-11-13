@@ -30,36 +30,50 @@
   /* Tipografía */
   --font-pixel: 'Press Start 2P', ui-monospace, monospace;
   --font-body: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --text-xs: 0.625rem;
-  --text-sm: 0.75rem;
-  --text-md: 0.875rem;
-  --text-lg: 1.125rem;
-  --text-xl: 1.5rem;
-  --text-body: 1rem;
+  /* Escala compacta: ~15 % más chica que la original. La fuente pixel no baja de 9 px para seguir legible. */
+  --text-xs: 0.5625rem; /* 9px */
+  --text-sm: 0.6875rem; /* 11px */
+  --text-md: 0.75rem; /* 12px */
+  --text-lg: 0.9375rem; /* 15px */
+  --text-xl: 1.25rem; /* 20px */
+  --text-body: 0.9375rem; /* 15px */
   --leading-pixel: 1.6;
   --leading-body: 1.5;
 
-  /* Espaciado (escala de 4px) */
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 24px;
-  --space-6: 32px;
-  --space-7: 48px;
+  /* Espaciado (~15 % más chico que la escala de 4px original) */
+  --space-1: 3px;
+  --space-2: 6px;
+  --space-3: 10px;
+  --space-4: 14px;
+  --space-5: 20px;
+  --space-6: 28px;
+  --space-7: 40px;
 
   /* Bordes y sombras pixel */
-  --border-w: 3px;
-  --border-w-lg: 4px;
-  --shadow-step: 4px;
+  --border-w: 2px;
+  --border-w-lg: 3px;
+  --shadow-step: 3px;
   --shadow-pixel: var(--shadow-step) var(--shadow-step) 0 var(--color-line);
   --shadow-pixel-pressed: 0 0 0 var(--color-line);
-  --bevel-light: inset 0 3px 0 rgb(255 255 255 / 0.65);
-  --bevel-dark: inset 0 -3px 0 rgb(59 54 80 / 0.16);
+  --bevel-light: inset 0 2px 0 rgb(255 255 255 / 0.65);
+  --bevel-dark: inset 0 -2px 0 rgb(59 54 80 / 0.16);
 
-  /* Tamaños táctiles */
+  /* Tamaños táctiles: los controles se ven más chicos (--control-h) pero la zona que responde al toque
+     sigue siendo de 44 px (--touch-min), con un ::after invisible que la agranda. */
   --touch-min: 44px;
-  --touch-lg: 48px;
+  --control-h: 40px;
+  --control-h-sm: 34px;
+  --touch-lg: 44px;
+
+  /* Estructura de app: barras de arriba y abajo siempre del mismo alto (+ zona segura del teléfono) */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --bar-top: 48px;
+  --bar-bottom: 56px;
+  --bar-top-total: calc(var(--bar-top) + var(--safe-top));
+  --bar-bottom-total: calc(var(--bar-bottom) + var(--safe-bottom));
 
   /* Capas y tiempos */
   --z-header: 10;

@@ -50,7 +50,7 @@ export function usePanZoom({ resetKey, onTap } = {}) {
     if (s.pointers.size === 1) {
       s.blocked = false
       s.pan = null
-      s.tap = !own || draggable ? { x: p.x, y: p.y, t: e.timeStamp, own } : null
+      s.tap = !own || draggable ? { x: p.x, y: p.y, t: performance.now(), own } : null
       if (!own) frameRef.current.setPointerCapture?.(e.pointerId)
     } else if (s.pointers.size === 2) {
       // Segundo dedo: empieza el pellizco y se cancela cualquier arrastre o toque.
@@ -97,15 +97,16 @@ export function usePanZoom({ resetKey, onTap } = {}) {
     s.pan = null
     const wasBlocked = s.blocked
     s.blocked = false
-    if (cancelled || wasBlocked || !tap || e.timeStamp - tap.t > TAP_MAX_MS) return
+    const now = performance.now()
+    if (cancelled || wasBlocked || !tap || now - tap.t > TAP_MAX_MS) return
     if (Math.hypot(p.x - tap.x, p.y - tap.y) > TAP_SLOP) return // se movió: fue un arrastre, no un toque
     const last = s.lastTap
-    if (last && e.timeStamp - last.t < DOUBLE_TAP_MS && Math.hypot(p.x - last.x, p.y - last.y) < DOUBLE_TAP_DISTANCE) {
+    if (last && now - last.t < DOUBLE_TAP_MS && Math.hypot(p.x - last.x, p.y - last.y) < DOUBLE_TAP_DISTANCE) {
       s.lastTap = null
       apply(toggleZoom(transformRef.current, p, getFrame()))
       return
     }
-    s.lastTap = { x: p.x, y: p.y, t: e.timeStamp }
+    s.lastTap = { x: p.x, y: p.y, t: now }
     if (tap.own) return // un toque sobre el recuadro no elige un color; solo cuenta para el doble toque
     const frame = getFrame()
     if (frame.w > 0 && frame.h > 0) onTapRef.current?.(screenToImage(transformRef.current, frame, p))

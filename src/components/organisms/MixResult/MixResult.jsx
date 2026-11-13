@@ -1,9 +1,12 @@
 import { useEffect } from 'react'
 import { PixelButton, PixelIcon, PixelPanel, PixelText } from '../../atoms/index.js'
-import { ColorCompare, MixingAnimation, OptionGroup, RecipeRow } from '../../molecules/index.js'
+import { ColorCompare, MixingAnimation, OptionGroup, RecipeRow, SaveRecipe } from '../../molecules/index.js'
 import { diagnose } from '../../../features/color-mixer/advisor.js'
 import { resultKey, useMixStore } from '../../../features/color-mixer/mixStore.js'
 import { describeQuality, PRECISION } from '../../../features/color-mixer/solver.js'
+import { ROUTES, navigate } from '../../../features/navigation/useRoute.js'
+import { useRecipesStore } from '../../../features/recipes/recipesStore.js'
+import { buildRecipePayload, recipeSignature } from '../../../features/recipes/validation.js'
 import styles from './MixResult.module.css'
 
 const PRECISIONS = [
@@ -30,7 +33,7 @@ const RECIPE_OPTIONS = [
 const sameRecipe = (a, b) =>
   a.parts.length === b.parts.length && a.parts.every((p, i) => p.paintId === b.parts[i].paintId && p.parts === b.parts[i].parts)
 
-function RecipeView({ recipe, target }) {
+function RecipeView({ recipe, target, save }) {
   return (
     <div className={styles.recipe}>
       <ColorCompare target={target} mix={recipe.mixHex} quality={recipe.quality} deltaE={recipe.deltaE} />
@@ -40,6 +43,7 @@ function RecipeView({ recipe, target }) {
         ))}
       </ul>
       <PixelText size="xs" tone="soft">Total: {recipe.total} {recipe.total === 1 ? 'parte' : 'partes'} en total</PixelText>
+      <SaveRecipe saved={save.saved} onSave={save.onSave} onOpenLibrary={save.onOpenLibrary} />
     </div>
   )
 }
@@ -52,6 +56,7 @@ export default function MixResult({ target, paints, onAddPaint }) {
   const maxParts = useMixStore((s) => s.maxParts)
   const recipeKey = useMixStore((s) => s.recipeKey)
   const result = useMixStore((s) => s.result)
+  const savedRecipes = useMixStore((s) => s.savedRecipes)
   const { calculate, setMaxParts, selectRecipe } = useMixStore.getState()
 
   const key = resultKey(target, paints, maxParts)
@@ -59,6 +64,23 @@ export default function MixResult({ target, paints, onAddPaint }) {
 
   const current = result?.key === key ? result : null // un resultado de otros datos no se muestra
   const retry = () => { useMixStore.setState({ result: null }); calculate({ target, paints }) }
+
+  // Guardar una receta: se guarda una copia (nombre, color y partes) y se recuerda para no duplicarla.
+  const saveFor = (recipe) => {
+    const signature = recipeSignature(target, recipe)
+    return {
+      saved: Boolean(savedRecipes[signature]),
+      onOpenLibrary: () => navigate(ROUTES.library),
+      onSave: async (name) => {
+        const built = buildRecipePayload({ name, targetHex: target, recipe })
+        if (built.error) return { error: built.error }
+        const result = await useRecipesStore.getState().add(built.payload)
+        if (result.error) return { error: result.error }
+        useMixStore.getState().markSaved(signature, result.data.id)
+        return {}
+      },
+    }
+  }
 
   const precisionId = (PRECISIONS.find((p) => p.parts === maxParts) ?? PRECISIONS[1]).id
   const precision = (
@@ -106,7 +128,7 @@ export default function MixResult({ target, paints, onAddPaint }) {
         alternatives.map((alt, i) => (
           <section key={i} aria-label={`Opción ${i + 1}`} className={styles.option}>
             <PixelText size="xs">Opción {i + 1}</PixelText>
-            <RecipeView recipe={alt} target={target} />
+            <RecipeView recipe={alt} target={target} save={saveFor(alt)} />
           </section>
         ))
       ) : (
@@ -114,7 +136,7 @@ export default function MixResult({ target, paints, onAddPaint }) {
           {active === 'best' && sameRecipe(best, recommended) && (
             <PixelText variant="body" size="sm" tone="soft">Es la misma que la recomendada.</PixelText>
           )}
-          <RecipeView recipe={shown} target={target} />
+          <RecipeView recipe={shown} target={target} save={saveFor(shown)} />
         </>
       )}
 
