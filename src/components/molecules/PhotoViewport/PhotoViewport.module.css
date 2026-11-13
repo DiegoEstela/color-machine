@@ -1,0 +1,52 @@
+.frame {
+  position: relative;
+  display: block;
+  width: fit-content; /* el marco abraza a la foto a 1×; con zoom no cambia de tamaño */
+  max-width: 100%;
+  margin-inline: auto;
+  line-height: 0;
+  border: var(--border-w-lg) solid var(--color-line);
+  box-shadow: var(--shadow-pixel);
+  background: var(--color-surface-alt);
+  overflow: hidden;
+  /* los gestos sobre la foto son de la foto: ni el navegador ni la página hacen zoom o scroll */
+  touch-action: none;
+  overscroll-behavior: contain;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+.frame[data-zoomed] { cursor: grab; }
+
+.stage { position: relative; display: block; transform-origin: 0 0; will-change: transform; }
+.canvas {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: max(120px, min(28dvh, calc(100dvh - 400px)));
+  image-rendering: auto;
+}
+.stage[data-pixelated] .canvas { image-rendering: pixelated; } /* a partir de 3× se ven los píxeles reales */
+
+.controls { position: absolute; right: var(--space-1); bottom: var(--space-1); display: flex; gap: var(--space-1); }
+.control {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 var(--space-1);
+  font-family: var(--font-pixel);
+  font-size: var(--text-xs);
+  line-height: 1;
+  color: var(--color-ink);
+  background: var(--color-surface);
+  border: var(--border-w) solid var(--color-line);
+  box-shadow: var(--bevel-light), var(--bevel-dark);
+  cursor: pointer;
+}
+.control[data-wide] { min-width: 52px; }
+.control::after { content: ''; position: absolute; inset: -4px; } /* zona táctil de 44 px */
+.control:active:not(:disabled) { transform: translate(1px, 1px); }
+.control:disabled { color: var(--color-ink-soft); background: var(--color-disabled); border-color: var(--color-ink-soft); box-shadow: none; cursor: default; }

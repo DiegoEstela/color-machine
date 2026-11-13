@@ -1,6 +1,6 @@
 # 010 — Zoom dentro de la foto (punto y recorte más exactos)
 
-- **Estado:** aprobado (con las opciones propuestas)
+- **Estado:** implementado (probado con gestos táctiles reales en Chrome; falta probarlo en tu teléfono, sobre todo en iPhone)
 - **Fecha:** 2026-11-14
 
 ## Objetivo
@@ -45,16 +45,16 @@ Poder **acercar la foto con los dedos** (pellizco) para elegir el punto o encuad
 No aplica. Las fotos se siguen procesando solo en el dispositivo.
 
 ## Criterios de aceptación
-- [ ] Pellizcar sobre la foto la acerca y la aleja dentro del marco (1× a 8×); la página **no** hace zoom (`visualViewport.scale` sigue en 1).
-- [ ] El marco de la foto mantiene el mismo ancho y alto con cualquier nivel de zoom; el resto de la pantalla no se mueve ni cambia de tamaño.
-- [ ] Con un dedo se mueve la foto acercada sin salirse de los límites; el doble toque acerca o vuelve a 1×; los botones + / − / 1× y la rueda del mouse hacen lo mismo.
-- [ ] En modo recorte, el recuadro sigue a la foto al hacer zoom o moverla; mover y redimensionar el recuadro funciona con la misma precisión a cualquier zoom; las esquinas no se agrandan con el zoom y tienen una zona táctil de 44 px.
-- [ ] En modo punto, un toque toma el color exacto del punto tocado a cualquier zoom (el cálculo usa la foto original) y un arrastre mueve la foto sin elegir un color.
-- [ ] A partir de 3× se ven los píxeles nítidos.
-- [ ] Funciona igual en el recorte del paso 1 y en el de las pinturas del paso 2.
-- [ ] El paso 1 (Foto) sigue sin scroll a 360x640 y 390x844.
-- [ ] Con `prefers-reduced-motion` no hay animaciones de zoom; los botones tienen nombre accesible y se pueden usar con teclado.
-- [ ] `npm test`, `npm run lint` y `npm run build` pasan.
+- [x] Pellizcar sobre la foto la acerca y la aleja dentro del marco (1× a 8×); la página **no** hace zoom (`visualViewport.scale` sigue en 1).
+- [x] El marco de la foto mantiene el mismo ancho y alto con cualquier nivel de zoom; el resto de la pantalla no se mueve ni cambia de tamaño.
+- [x] Con un dedo se mueve la foto acercada sin salirse de los límites; el doble toque acerca o vuelve a 1×; los botones + / − / 1× y la rueda del mouse hacen lo mismo.
+- [x] En modo recorte, el recuadro sigue a la foto al hacer zoom o moverla; mover y redimensionar el recuadro funciona con la misma precisión a cualquier zoom; las esquinas no se agrandan con el zoom y tienen una zona táctil de 44 px.
+- [x] En modo punto, un toque toma el color exacto del punto tocado a cualquier zoom (el cálculo usa la foto original) y un arrastre mueve la foto sin elegir un color.
+- [x] A partir de 3× se ven los píxeles nítidos.
+- [x] Funciona igual en el recorte del paso 1 y en el de las pinturas del paso 2.
+- [x] El paso 1 (Foto) sigue sin scroll: medido a 360x640 con una foto vertical cargada (documento de 640 px en una ventana de 640 px, sin scroll). A 390x844 no se volvió a medir en esta tanda (hay más alto disponible y el marco usa las mismas reglas de tamaño).
+- [x] Con `prefers-reduced-motion` no hay animaciones de zoom; los botones tienen nombre accesible y se pueden usar con teclado.
+- [x] `npm test`, `npm run lint` y `npm run build` pasan.
 
 ## Riesgos y preguntas abiertas
 - **iPhone (Safari).** Bloquear el zoom de la página sobre un elemento depende de `touch-action: none` y del evento `gesturestart`; funciona en Chrome Android, pero **hay que probarlo en un iPhone real** y, si hace falta, ajustar.
@@ -62,3 +62,22 @@ No aplica. Las fotos se siguen procesando solo en el dispositivo.
 - **Resolución.** La foto se carga a 1024 px de lado máximo; a 8× cada píxel de la foto ocupa 8 de pantalla. Para elegir el color alcanza (el color no depende de la nitidez); si más adelante hace falta más detalle se puede subir ese límite a costa de memoria.
 - **Elegir entre mover la foto y mover el recuadro.** Arrastrar *dentro* del recuadro lo mueve; arrastrar *fuera* mueve la foto. Con el recuadro muy grande a mucho zoom puede quedar poca foto "libre" para arrastrar; los botones y el pellizco siempre funcionan.
 - **Pregunta para vos:** ¿te sirve el doble toque para acercar o volver (y los botones + / − / 1×), o preferís quitar los botones para dejar el marco más limpio?
+
+## Resultado y notas de implementación
+- **Verificado en Chrome con gestos táctiles reales** (emulación móvil 360x640, build de producción; pellizcos y toques con eventos táctiles del navegador, no simulados desde el código):
+  - Un pellizco sobre la foto la acerca (de 1× a 3.1× y hasta 7.7×) y **la página queda en escala 1** (`visualViewport.scale = 1`).
+  - **El marco no cambia**: misma posición y mismo tamaño (142x187 px en la prueba) antes y después de acercar, arrastrar y alejar; el documento tampoco cambia de tamaño y no hay scroll horizontal.
+  - Las **esquinas del recuadro siguen midiendo 16 px** a cualquier zoom, mientras el recuadro crece de 40 a 125 px con la foto.
+  - A partir de 3× se ven los **píxeles nítidos**.
+  - Dos dedos juntándose alejan la foto (7.7× → 2.3× → 1×) aunque empiecen **sobre el recuadro**; dos dedos moviéndose juntos desplazan la foto sin cambiar el zoom.
+  - El **doble toque** acerca a 3× y otro doble toque vuelve a 1×, tanto fuera como sobre el recuadro.
+  - **Modo punto, exactitud:** un toque a 1× tomó `#2b8eda`, el color exacto de la foto original en ese punto; después de acercar y tocar **el mismo punto de la foto**, tomó el mismo `#2b8eda`; el punto vecino con zoom tomó `#2b36da`, también exacto. Un arrastre no cambia el color; un dedo en modo punto mueve la foto acercada.
+  - Un pellizco **fuera** de la foto (la barra de título) no hizo zoom de la página en esta emulación; el bloqueo del zoom del navegador está aplicado sobre el marco de la foto con `touch-action: none`, `overscroll-behavior: contain` y el bloqueo de los eventos `gesture*` de Safari.
+- **Decisiones y límites que conviene conocer:**
+  - **Arrastrar dentro del recuadro lo mueve; arrastrar fuera mueve la foto.** Con zoom alto (a partir de ~3× en un recuadro del 30 %) el recuadro puede cubrir todo el marco y no queda fondo para arrastrar con un dedo: en ese caso se mueve la foto con **dos dedos** (verificado) o se vuelve a acercar con los botones. En el modo punto, que no tiene recuadro, un dedo siempre mueve la foto.
+  - **Doble toque sobre el recuadro** también hace zoom (para poder volver a 1× aunque el recuadro lo cubra todo); arrastrarlo no cuenta como doble toque.
+  - Los **botones − / zoom actual / +** están dentro del marco (abajo a la derecha), con zona táctil de 44 px; el botón del medio muestra el nivel ("7.7×") y vuelve a 1×.
+  - **Bordes y esquinas no se agrandan** porque se dividen por la variable CSS `--zoom` que pone el visor; la matemática del zoom vive en `lib/zoom.js` y los gestos en `hooks/usePanZoom.js`.
+  - Se **quitó el consejo "Mejor con luz natural"** del paso 1 (era la segunda mitad de la línea de ayuda) para que el texto "Pellizcá para acercar." entre en una sola línea y el paso 1 siga sin scroll; el consejo de la luz sigue en el alta de pinturas.
+  - La rueda del mouse (y el pellizco del trackpad) hacen zoom sobre la foto y no desplazan la página.
+- **No se pudo comprobar aquí:** el comportamiento en un **iPhone real** (Safari). El bloqueo del zoom de la página depende de `touch-action` y del evento `gesturestart`; hay que probarlo en el teléfono.

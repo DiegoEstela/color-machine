@@ -1,21 +1,10 @@
-.frame {
-  position: relative;
-  display: block;
-  width: fit-content; /* el marco abraza a la foto para que el recuadro coincida con la imagen */
-  max-width: 100%;
-  margin-inline: auto;
-  line-height: 0;
-  border: var(--border-w-lg) solid var(--color-line);
-  box-shadow: var(--shadow-pixel);
-  background: var(--color-surface-alt);
-}
-.canvas { display: block; width: auto; height: auto; max-width: 100%; max-height: max(120px, min(28dvh, calc(100dvh - 400px))); object-fit: contain; image-rendering: auto; cursor: crosshair; }
+/* La mira vive dentro de la foto; se divide por `--zoom` para verse del mismo tamaño a cualquier zoom. */
 .crosshair {
   position: absolute;
-  width: 24px;
-  height: 24px;
+  width: calc(24px / var(--zoom, 1));
+  height: calc(24px / var(--zoom, 1));
   transform: translate(-50%, -50%);
-  border: var(--border-w) solid var(--color-surface);
-  outline: var(--border-w) solid var(--color-line);
+  border: calc(var(--border-w) / var(--zoom, 1)) solid var(--color-surface);
+  outline: calc(var(--border-w) / var(--zoom, 1)) solid var(--color-line);
   pointer-events: none;
 }

@@ -52,7 +52,8 @@ describe('TargetColorPicker', () => {
     expect(screen.getByRole('radio', { name: 'Recorte' })).toHaveAttribute('aria-checked', 'true')
     fireEvent.click(screen.getByRole('radio', { name: 'Punto' }))
     expect(screen.getByRole('radio', { name: 'Punto' })).toHaveAttribute('aria-checked', 'true')
-    expect(screen.getByText(/Tocá un punto de la foto/)).toBeInTheDocument()
+    expect(screen.getByText(/Tocá un punto/)).toBeInTheDocument()
+    expect(screen.getByText(/Pellizcá para acercar/)).toBeInTheDocument()
   })
 
   it('un color escrito a mano descarta la miniatura anterior', () => {

@@ -12,3 +12,4 @@ export { default as MixingAnimation } from './MixingAnimation/MixingAnimation.js
 export { default as PaintAdvice } from './PaintAdvice/PaintAdvice.jsx'
 export { default as StepIndicator } from './StepIndicator/StepIndicator.jsx'
 export { default as OptionGroup } from './OptionGroup/OptionGroup.jsx'
+export { default as PhotoViewport } from './PhotoViewport/PhotoViewport.jsx'

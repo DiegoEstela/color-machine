@@ -88,7 +88,7 @@ export default function TargetColorPicker({ value, thumbnail = null, onChange, o
             onChange={setPhotoMode}
           />
           <PixelText variant="body" size="sm" tone="soft">
-            {photoMode === 'crop' ? 'Encuadrá la zona del color.' : 'Tocá un punto de la foto.'} Mejor con luz natural.
+            {photoMode === 'crop' ? 'Encuadrá la zona.' : 'Tocá un punto.'} Pellizcá para acercar.
           </PixelText>
           {photoError && <PixelText variant="body" size="sm" tone="danger" role="alert">{photoError}</PixelText>}
           {photoMode === 'crop'

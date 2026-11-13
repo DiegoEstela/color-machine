@@ -29,7 +29,7 @@ export default function PaintCapture({ onSubmit, onCancel, onDone, initialName =
     <div className={styles.root}>
       <PixelText as="h2" size="sm">Nueva pintura</PixelText>
       <PixelText variant="body" tone="soft">
-        Sacale una foto al frasco y encuadrá la zona de pintura. También podés escribir el color a mano.
+        Sacale una foto al frasco y encuadrá la zona de pintura; pellizcá la foto para acercar. También podés escribir el color a mano. Mejor con luz natural.
       </PixelText>
       <PhotoPicker onFile={handleFile} />
       {photoError && <PixelText variant="body" tone="danger" role="alert">{photoError}</PixelText>}
