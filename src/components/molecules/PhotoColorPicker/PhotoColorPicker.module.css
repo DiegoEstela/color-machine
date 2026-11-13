@@ -1,0 +1,17 @@
+.frame {
+  position: relative;
+  line-height: 0;
+  border: var(--border-w-lg) solid var(--color-line);
+  box-shadow: var(--shadow-pixel);
+  background: var(--color-surface-alt);
+}
+.canvas { display: block; width: 100%; height: auto; max-height: 60dvh; object-fit: contain; image-rendering: auto; cursor: crosshair; }
+.crosshair {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  transform: translate(-50%, -50%);
+  border: var(--border-w) solid var(--color-surface);
+  outline: var(--border-w) solid var(--color-line);
+  pointer-events: none;
+}

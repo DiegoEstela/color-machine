@@ -1,0 +1,2 @@
+.row { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+.row > button { flex: 1 1 140px; }

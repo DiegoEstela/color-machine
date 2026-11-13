@@ -3,7 +3,11 @@ import { PixelButton, PixelPanel, PixelText } from './components/atoms/index.js'
 import { authService, useAuthStore } from './features/auth/index.js'
 import Auth from './pages/Auth/Auth.jsx'
 import Catalog from './pages/Catalog/Catalog.jsx'
+import Create from './pages/Create/Create.jsx'
 import styles from './App.module.css'
+
+// El catálogo de átomos queda accesible en /?catalog=1
+const showCatalog = new URLSearchParams(window.location.search).has('catalog')
 
 export default function App() {
   const status = useAuthStore((s) => s.status)
@@ -32,7 +36,7 @@ export default function App() {
         <PixelText size="sm">Color Machine</PixelText>
         <PixelButton variant="secondary" size="sm" onClick={() => authService.signOut()}>Salir</PixelButton>
       </header>
-      <Catalog />
+      {showCatalog ? <Catalog /> : <Create />}
     </>
   )
 }
