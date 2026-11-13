@@ -1,5 +1,9 @@
-import { render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
+import { afterEach } from 'vitest'
+import { useNavigationStore } from '../../../features/navigation/navigationStore.js'
 import { AppShell } from '../index.js'
+
+afterEach(() => useNavigationStore.setState({ drawerOpen: false }))
 
 describe('AppShell', () => {
   it('tiene barra superior con el título, contenido y barra de pestañas', () => {
@@ -19,17 +23,36 @@ describe('AppShell', () => {
     expect(screen.getByRole('banner')).toContainElement(screen.getByText('pasos'))
   })
 
-  it('con `back` muestra una flecha accesible en lugar del logo', () => {
+  it('con `back` muestra una flecha accesible en lugar del botón de menú', () => {
     render(<AppShell title="Receta" back={{ href: '#/recetas', label: 'Volver a mis recetas' }}>x</AppShell>)
     const back = screen.getByRole('link', { name: 'Volver a mis recetas' })
     expect(back).toHaveAttribute('href', '#/recetas')
     expect(screen.getByRole('banner').querySelectorAll('svg')).toHaveLength(1) // solo la flecha
+    expect(screen.queryByRole('button', { name: 'Abrir menú' })).not.toBeInTheDocument()
   })
 
-  it('sin `back` muestra el logo', () => {
+  it('sin `back` muestra el botón ☰ y no una flecha', () => {
     render(<AppShell title="t">x</AppShell>)
-    expect(screen.getByRole('banner').querySelector('svg')).not.toBeNull()
+    expect(screen.getByRole('banner')).toContainElement(screen.getByRole('button', { name: 'Abrir menú' }))
     expect(screen.queryByRole('link', { name: /Volver/ })).not.toBeInTheDocument()
+  })
+
+  it('☰ abre el menú lateral con Mis pinturas y lo cierra con Esc', () => {
+    render(<AppShell title="t">x</AppShell>)
+    expect(screen.queryByRole('dialog', { name: 'Menú' })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Abrir menú' }))
+    expect(screen.getByRole('dialog', { name: 'Menú' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Mis pinturas' })).toHaveAttribute('href', '#/pinturas')
+    fireEvent.keyDown(document, { key: 'Escape' })
+    expect(screen.queryByRole('dialog', { name: 'Menú' })).not.toBeInTheDocument()
+  })
+
+  it('deslizar desde el borde izquierdo abre el menú', () => {
+    render(<AppShell title="t">x</AppShell>)
+    const p = (x, y) => ({ identifier: 1, clientX: x, clientY: y })
+    fireEvent.touchStart(document.body, { touches: [p(3, 300)], changedTouches: [p(3, 300)] })
+    act(() => { fireEvent.touchEnd(document.body, { touches: [], changedTouches: [p(120, 305)] }) })
+    expect(screen.getByRole('dialog', { name: 'Menú' })).toBeInTheDocument()
   })
 
   it('no hay botón de cerrar sesión en la barra superior (está en la pestaña Cuenta)', () => {

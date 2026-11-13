@@ -3,7 +3,7 @@ import { PixelButton, PixelText } from '../../atoms/index.js'
 import { PaintCard, PaintForm } from '../../molecules/index.js'
 import styles from './PaintList.module.css'
 
-/** Lista de "Mis pinturas" con selección, edición y borrado. Maneja los estados de carga, error y vacío. */
+/** Lista de "Mis pinturas" con selección (si se pasa `onToggle`), edición y borrado. Maneja los estados de carga, error y vacío. */
 export default function PaintList({
   paints, selectedIds, thumbs, status, error, onToggle, onUpdate, onRemove, onRetry,
 }) {
@@ -54,7 +54,7 @@ export default function PaintList({
               paint={paint}
               thumb={thumbs[paint.id]}
               selected={selectedIds.includes(paint.id)}
-              onToggle={() => onToggle(paint.id)}
+              onToggle={onToggle ? () => onToggle(paint.id) : undefined}
               onEdit={() => startEdit(paint)}
               onDelete={async () => {
                 const result = await onRemove(paint.id)

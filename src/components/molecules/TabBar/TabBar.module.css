@@ -21,3 +21,29 @@
 .tab[aria-current='page'] { color: var(--color-ink); background: var(--color-pink); box-shadow: var(--bevel-light), var(--bevel-dark); }
 .tab:active { transform: translateY(1px); }
 .label { font-family: var(--font-pixel); font-size: var(--text-xs); line-height: 1; }
+
+/* Crear, al centro: el botón sobresale ~6 px por encima de la barra (la barra mide lo mismo que antes). */
+.tab[data-primary] {
+  justify-content: flex-end;
+  padding-bottom: var(--space-1);
+  border-right: 0;
+  color: var(--color-ink);
+  background: transparent;
+  box-shadow: none;
+  overflow: visible;
+}
+.tab[data-primary][aria-current='page'] { background: transparent; box-shadow: none; }
+.fab {
+  transform: translateY(-8px);
+  display: grid;
+  place-items: center;
+  width: var(--fab-size);
+  height: var(--fab-size);
+  color: var(--color-ink);
+  background: var(--color-pink);
+  border: var(--border-w) solid var(--color-line);
+  box-shadow: var(--shadow-pixel), var(--bevel-light);
+}
+.tab[data-primary][aria-current='page'] .fab { background: var(--color-yellow); }
+.tab[data-primary]:active { transform: none; }
+.tab[data-primary]:active .fab { transform: translate(var(--shadow-step), calc(var(--shadow-step) - 8px)); box-shadow: var(--shadow-pixel-pressed); }

@@ -78,9 +78,15 @@
   /* Capas y tiempos */
   --z-header: 10;
   --z-modal: 100;
+  --z-drawer: 110;
   --dur-fast: 80ms;
   --dur-base: 160ms;
   --dur-pop: 360ms;
   --dur-enter: 200ms;
   --dur-twinkle: 1200ms;
+  --dur-drawer: 220ms;
+
+  /* Navegación nativa */
+  --drawer-w: min(280px, 82vw);
+  --fab-size: 40px;
 }

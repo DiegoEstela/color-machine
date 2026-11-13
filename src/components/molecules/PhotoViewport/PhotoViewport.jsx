@@ -18,7 +18,7 @@ export default function PhotoViewport({ canvasRef, ready, resetKey, onTap, label
   const zoomText = formatZoom(scale)
 
   return (
-    <div ref={frameRef} className={styles.frame} data-zoomed={scale > 1.01 || undefined} {...handlers}>
+    <div ref={frameRef} className={styles.frame} data-no-edge-swipe data-zoomed={scale > 1.01 || undefined} {...handlers}>
       <div
         ref={stageRef}
         className={styles.stage}

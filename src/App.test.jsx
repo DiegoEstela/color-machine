@@ -62,8 +62,15 @@ describe('App: estructura de app', () => {
   it('ya no hay botón "Salir" ni ícono de cerrar sesión en la barra superior', () => {
     render(<App />)
     expect(screen.queryByRole('button', { name: 'Salir' })).not.toBeInTheDocument()
-    expect(within(screen.getByRole('banner')).queryByRole('button')).not.toBeInTheDocument()
+    // el único botón de la barra superior es el ☰ del menú lateral
+    expect(within(screen.getByRole('banner')).getAllByRole('button').map((b) => b.getAttribute('aria-label'))).toEqual(['Abrir menú'])
     expect(screen.queryByRole('button', { name: 'Cerrar sesión' })).not.toBeInTheDocument()
+  })
+
+  it('la ruta #/pinturas muestra Mis pinturas sin pestaña activa', () => {
+    window.location.hash = '#/pinturas'
+    render(<App />)
+    expect(screen.getByRole('heading', { name: 'Mis pinturas' })).toBeInTheDocument()
   })
 
   it('la pantalla de acceso (sin sesión) no lleva barra de pestañas', () => {

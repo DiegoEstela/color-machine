@@ -6,6 +6,7 @@ import Account from './pages/Account/Account.jsx'
 import Auth from './pages/Auth/Auth.jsx'
 import Catalog from './pages/Catalog/Catalog.jsx'
 import Create from './pages/Create/Create.jsx'
+import Paints from './pages/Paints/Paints.jsx'
 import Library from './pages/Library/Library.jsx'
 import RecipePage from './pages/RecipePage/RecipePage.jsx'
 import styles from './App.module.css'
@@ -39,6 +40,7 @@ export default function App() {
   switch (route.name) {
     case 'library': return <Library />
     case 'recipe': return <RecipePage id={route.id} />
+    case 'paints': return <Paints />
     case 'account': return <Account />
     default: return <Create />
   }

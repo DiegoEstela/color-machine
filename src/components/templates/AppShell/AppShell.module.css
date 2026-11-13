@@ -34,6 +34,11 @@
   color: var(--color-ink);
 }
 
+@keyframes enter {
+  from { opacity: 0; transform: translateX(var(--space-3)); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
 /* El contenido es lo único que hace scroll: sin rebote de la página ni "tirar para actualizar". */
 .content {
   flex: 1;
@@ -42,5 +47,7 @@
   overflow-y: auto;
   overscroll-behavior: none;
   -webkit-overflow-scrolling: touch;
+  /* Entrada de cada pantalla. `backwards`: al terminar no queda ningún transform activo. */
+  animation: enter var(--dur-enter) steps(4) 1 backwards;
   padding: var(--space-3) max(var(--space-3), var(--safe-right)) var(--space-3) max(var(--space-3), var(--safe-left));
 }
