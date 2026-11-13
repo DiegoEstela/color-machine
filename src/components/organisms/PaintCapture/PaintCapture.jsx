@@ -8,7 +8,7 @@ import styles from './PaintCapture.module.css'
  * Alta de una pintura: foto (opcional) → recorte → nombre → guardar.
  * `onSubmit({ name, hex }, thumbnail)` devuelve `{ error? }`; si no hay error se llama a `onDone`.
  */
-export default function PaintCapture({ onSubmit, onCancel, onDone }) {
+export default function PaintCapture({ onSubmit, onCancel, onDone, initialName = '' }) {
   const [file, setFile] = useState(null)
   const [hex, setHex] = useState(null)
   const [thumb, setThumb] = useState(null)
@@ -40,7 +40,7 @@ export default function PaintCapture({ onSubmit, onCancel, onDone }) {
           <ColorSwatch color={hex} size="lg" label="Color de la pintura" />
         </div>
       )}
-      <PaintForm hex={hex} onHexChange={handleHex} onSubmit={handleSubmit} onCancel={onCancel} submitLabel="Guardar pintura" />
+      <PaintForm initialName={initialName} hex={hex} onHexChange={handleHex} onSubmit={handleSubmit} onCancel={onCancel} submitLabel="Guardar pintura" />
     </div>
   )
 }

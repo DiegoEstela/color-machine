@@ -3,3 +3,4 @@ export { default as TargetColorPicker } from './TargetColorPicker/TargetColorPic
 export { default as PaintCapture } from './PaintCapture/PaintCapture.jsx'
 export { default as PaintList } from './PaintList/PaintList.jsx'
 export { default as PaintsStep } from './PaintsStep/PaintsStep.jsx'
+export { default as MixResult } from './MixResult/MixResult.jsx'

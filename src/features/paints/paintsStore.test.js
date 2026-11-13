@@ -75,3 +75,15 @@ describe('paintsStore', () => {
     expect(s().selectedIds).not.toContain('p0')
   })
 })
+
+describe('paintsStore: nombre sugerido', () => {
+  it('guarda y limpia el nombre pendiente; reset también lo limpia', () => {
+    s().setPendingName('Blanco')
+    expect(s().pendingName).toBe('Blanco')
+    s().setPendingName(null)
+    expect(s().pendingName).toBeNull()
+    s().setPendingName('Azul')
+    s().reset()
+    expect(s().pendingName).toBeNull()
+  })
+})

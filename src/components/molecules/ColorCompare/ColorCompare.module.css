@@ -1,0 +1,4 @@
+.root { display: flex; flex-direction: column; gap: var(--space-2); }
+.pair { display: flex; gap: var(--space-3); }
+.item { flex: 1; margin: 0; display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
+.swatch { height: 72px; display: flex; }

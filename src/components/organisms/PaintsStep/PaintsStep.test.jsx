@@ -67,4 +67,45 @@ describe('PaintsStep', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Reintentar' }))
     expect(await screen.findByRole('button', { name: /Pintura 1 / })).toBeInTheDocument()
   })
+
+  describe('consejero de pinturas', () => {
+    const base = { onBack: vi.fn(), onNext: vi.fn() }
+    const violeta = '#5b2a86'
+
+    it('para un violeta pide rojo y azul y marca "Agregar" en las que faltan', async () => {
+      repo.list.mockResolvedValue({ data: [], error: null })
+      render(<PaintsStep {...base} target={violeta} />)
+      expect(await screen.findByRole('button', { name: 'Agregar Rojo' })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Agregar Azul' })).toBeInTheDocument()
+    })
+
+    it('marca "la tenés" las que el usuario ya guardó, sin pedirlas de nuevo', async () => {
+      repo.list.mockResolvedValue({ data: [{ id: 'm', name: 'Mi rojo', hex: '#c1121f' }], error: null })
+      render(<PaintsStep {...base} target={violeta} />)
+      expect(await screen.findByText('la tenés (Mi rojo)')).toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: 'Agregar Rojo' })).not.toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Agregar Azul' })).toBeInTheDocument()
+    })
+
+    it('"Agregar" abre el alta con el nombre sugerido y, al guardar, el consejo se actualiza', async () => {
+      repo.list.mockResolvedValue({ data: [], error: null })
+      repo.create.mockResolvedValue({ data: { id: 'n', name: 'Azul', hex: '#1d3fbb' }, error: null })
+      render(<PaintsStep {...base} target={violeta} />)
+      fireEvent.click(await screen.findByRole('button', { name: 'Agregar Azul' }))
+      expect(screen.getByLabelText('Nombre')).toHaveValue('Azul')
+      fireEvent.change(screen.getByLabelText('Color (hex)'), { target: { value: '#1d3fbb' } })
+      fireEvent.click(screen.getByRole('button', { name: 'Guardar pintura' }))
+      await waitFor(() => expect(repo.create).toHaveBeenCalledWith({ name: 'Azul', hex: '#1d3fbb' }))
+      expect(await screen.findByText('la tenés')).toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: 'Agregar Azul' })).not.toBeInTheDocument()
+    })
+
+    it('si se llega desde un consejo del paso 3, abre el alta con ese nombre', async () => {
+      repo.list.mockResolvedValue({ data: [], error: null })
+      usePaintsStore.getState().setPendingName('Blanco')
+      render(<PaintsStep {...base} target={violeta} />)
+      expect(screen.getByLabelText('Nombre')).toHaveValue('Blanco')
+      expect(usePaintsStore.getState().pendingName).toBeNull()
+    })
+  })
 })

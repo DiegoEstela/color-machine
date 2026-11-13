@@ -1,16 +1,26 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { PixelButton, PixelText } from '../../atoms/index.js'
+import { PaintAdvice } from '../../molecules/index.js'
 import PaintCapture from '../PaintCapture/PaintCapture.jsx'
 import PaintList from '../PaintList/PaintList.jsx'
+import { adviseBasePaints, matchPaints } from '../../../features/color-mixer/advisor.js'
 import { MAX_SELECTED, MIN_SELECTED, usePaintsStore } from '../../../features/paints/paintsStore.js'
 import styles from './PaintsStep.module.css'
 
 /** Paso 2: mis pinturas (guardadas en la cuenta), alta de nuevas y selección de las que se usarán. */
-export default function PaintsStep({ onBack, onNext }) {
+export default function PaintsStep({ target, onBack, onNext }) {
   const { paints, selectedIds, thumbs, status, error } = usePaintsStore()
   const { load, add, update, remove, toggleSelect } = usePaintsStore.getState()
-  const [adding, setAdding] = useState(false)
+  // Si se llega desde un consejo ("Agregar Blanco"), se abre el alta con el nombre ya puesto.
+  const [suggestedName] = useState(() => usePaintsStore.getState().pendingName ?? '')
+  const [adding, setAdding] = useState(Boolean(suggestedName))
+  const [name, setName] = useState(suggestedName)
   const [notice, setNotice] = useState(null)
+
+  useEffect(() => { usePaintsStore.getState().setPendingName(null) }, [])
+
+  const roles = useMemo(() => (target ? adviseBasePaints(target).roles : []), [target])
+  const advice = useMemo(() => matchPaints(roles, paints), [roles, paints])
 
   useEffect(() => {
     if (usePaintsStore.getState().status === 'idle') usePaintsStore.getState().load()
@@ -24,6 +34,7 @@ export default function PaintsStep({ onBack, onNext }) {
   if (adding) {
     return (
       <PaintCapture
+        initialName={name}
         onSubmit={add}
         onCancel={() => setAdding(false)}
         onDone={() => setAdding(false)}
@@ -39,7 +50,10 @@ export default function PaintsStep({ onBack, onNext }) {
       <PixelText variant="body" tone="soft">
         Elegí con qué pinturas vas a mezclar ({MIN_SELECTED} a {MAX_SELECTED}). Si falta alguna, agregala.
       </PixelText>
-      <PixelButton variant="secondary" onClick={() => setAdding(true)}>Agregar pintura</PixelButton>
+      {status === 'ready' && (
+        <PaintAdvice items={advice} onAdd={(role) => { setName(role.name); setAdding(true) }} />
+      )}
+      <PixelButton variant="secondary" onClick={() => { setName(''); setAdding(true) }}>Agregar pintura</PixelButton>
 
       <PaintList
         paints={paints}

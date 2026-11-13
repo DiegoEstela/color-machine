@@ -1,0 +1,87 @@
+import { deltaE, mixHex } from './mixer.js'
+
+export const PRECISION = { simple: 6, normal: 10, preciso: 16 }
+export const DEFAULT_MAX_PARTS = PRECISION.normal
+export const DEFAULT_MAX_PAINTS = 4 // en la práctica no se mezclan más de 4 pinturas a la vez
+const RECOMMENDED_TOLERANCE = 1 // ΔE extra que se acepta a cambio de una receta más simple
+const ALTERNATIVE_WINDOW = 3 // las alternativas no pueden ser peores que la mejor por más de esto
+
+const gcd = (a, b) => (b === 0 ? a : gcd(b, a % b))
+
+/**
+ * Todas las composiciones de partes enteras para `count` pinturas con 1..maxParts partes en total,
+ * como máximo `maxPaints` pinturas distintas y solo las primitivas (se descartan 2:2, 4:2, etc.).
+ * El orden es determinista.
+ */
+export function enumerateRecipes(count, maxParts, maxPaints = DEFAULT_MAX_PAINTS) {
+  const out = []
+  const current = new Array(count).fill(0)
+  const walk = (i, left, used) => {
+    if (i === count) {
+      const total = maxParts - left
+      if (total === 0) return
+      if (current.reduce((g, v) => gcd(g, v), 0) === 1) out.push(current.slice())
+      return
+    }
+    current[i] = 0
+    walk(i + 1, left, used)
+    if (used < maxPaints) {
+      for (let p = 1; p <= left; p++) {
+        current[i] = p
+        walk(i + 1, left - p, used + 1)
+      }
+      current[i] = 0
+    }
+  }
+  walk(0, maxParts, 0)
+  return out
+}
+
+/** Calidad del parecido en palabras, según ΔE 2000. */
+export function describeQuality(dE) {
+  if (dE < 2) return 'Casi idéntico'
+  if (dE < 5) return 'Muy parecido'
+  if (dE < 10) return 'Parecido'
+  return 'Aproximado'
+}
+
+const buildRecipe = (paints, amounts, target) => {
+  const parts = paints
+    .map((p, i) => ({ paintId: p.id, name: p.name, hex: p.hex, parts: amounts[i] }))
+    .filter((p) => p.parts > 0)
+  const mixed = mixHex(parts)
+  const dE = deltaE(target, mixed)
+  return { parts, total: parts.reduce((s, p) => s + p.parts, 0), mixHex: mixed, deltaE: dE, quality: describeQuality(dE) }
+}
+
+const byQuality = (a, b) => a.deltaE - b.deltaE || a.total - b.total || a.mixHex.localeCompare(b.mixHex)
+
+/**
+ * Busca las mejores recetas de partes enteras para acercarse a `target` con `paints` ([{ id, name, hex }]).
+ * Devuelve `{ recommended, best, alternatives }` (null si no hay pinturas):
+ * - best: menor ΔE.
+ * - recommended: la de menos partes cuyo ΔE no supera el mejor en más de 1.
+ * - alternatives: hasta 2 recetas distintas a simple vista, casi tan buenas.
+ */
+export function solve({ target, paints, maxParts = DEFAULT_MAX_PARTS, maxPaints = DEFAULT_MAX_PAINTS }) {
+  if (!paints || paints.length === 0) return null
+  const recipes = enumerateRecipes(paints.length, maxParts, maxPaints)
+    .map((amounts) => buildRecipe(paints, amounts, target))
+    .sort(byQuality)
+
+  const best = recipes[0]
+  const recommended = recipes
+    .filter((r) => r.deltaE <= best.deltaE + RECOMMENDED_TOLERANCE)
+    .reduce((a, b) => (b.total < a.total || (b.total === a.total && b.deltaE < a.deltaE) ? b : a))
+
+  const picked = [best, recommended]
+  const alternatives = []
+  for (const r of recipes) {
+    if (alternatives.length === 2) break
+    if (r.deltaE > best.deltaE + ALTERNATIVE_WINDOW) break
+    if (picked.some((p) => p === r || deltaE(p.mixHex, r.mixHex) < 1)) continue
+    picked.push(r)
+    alternatives.push(r)
+  }
+  return { recommended, best, alternatives }
+}

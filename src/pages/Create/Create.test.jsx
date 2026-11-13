@@ -31,10 +31,11 @@ describe('Create', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Azul #0000ff' }))
     fireEvent.click(screen.getByRole('button', { name: 'Siguiente' }))
 
-    // Paso 3 provisorio: muestra las pinturas elegidas
+    // Paso 3: calcula y muestra la receta
     expect(screen.getByText('Paso 3 de 3')).toBeInTheDocument()
-    expect(screen.getByRole('img', { name: 'Rojo #ff0000' })).toBeInTheDocument()
-    expect(screen.getByRole('img', { name: 'Azul #0000ff' })).toBeInTheDocument()
+    expect(await screen.findByRole('img', { name: /^Tu mezcla #/ }, { timeout: 3000 })).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: 'Tu color #e63946' })).toBeInTheDocument()
+    expect(screen.getByText(/Total: \d+ partes? en total/)).toBeInTheDocument()
 
     // Volver dos veces conserva el color objetivo
     fireEvent.click(screen.getByRole('button', { name: 'Volver' }))

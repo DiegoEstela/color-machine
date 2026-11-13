@@ -4,7 +4,7 @@ import { paintsRepo } from '../storage/paintsRepo.js'
 export const MIN_SELECTED = 2
 export const MAX_SELECTED = 6
 
-const initial = { paints: [], selectedIds: [], thumbs: {}, status: 'idle', error: null }
+const initial = { paints: [], selectedIds: [], thumbs: {}, status: 'idle', error: null, pendingName: null }
 
 /** status: 'idle' | 'loading' | 'ready' | 'error'. Las miniaturas (`thumbs`) viven solo en memoria. */
 export const usePaintsStore = create((set, get) => ({
@@ -64,6 +64,9 @@ export const usePaintsStore = create((set, get) => ({
     set({ selectedIds: [...selectedIds, id] })
     return true
   },
+
+  /** Nombre sugerido para la próxima pintura que se agregue (por ejemplo "Blanco", desde un consejo). */
+  setPendingName: (pendingName) => set({ pendingName }),
 
   reset: () => set({ ...initial }),
 }))

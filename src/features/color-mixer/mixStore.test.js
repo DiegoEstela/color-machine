@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { useMixStore } from './mixStore.js'
+import { resultKey, useMixStore } from './mixStore.js'
 
 const s = () => useMixStore.getState()
 beforeEach(() => s().reset())
@@ -37,5 +37,64 @@ describe('mixStore', () => {
     s().setTargetThumb('data:x')
     s().reset()
     expect(s().targetThumb).toBeNull()
+  })
+})
+
+describe('mixStore: cálculo de recetas', () => {
+  const rojo = { id: 'r', name: 'Rojo', hex: '#e4002b' }
+  const azul = { id: 'a', name: 'Azul', hex: '#1d3fbb' }
+  const wait = () => new Promise((r) => setTimeout(r, 30))
+
+  it('calcula y guarda el resultado con su clave', async () => {
+    await s().calculate({ target: '#5b2a86', paints: [rojo, azul] })
+    expect(s().result.status).toBe('ready')
+    expect(s().result.data.recommended.parts.length).toBeGreaterThan(0)
+    expect(s().result.key).toBe(resultKey('#5b2a86', [rojo, azul], s().maxParts))
+  })
+
+  it('no recalcula si los datos son los mismos', async () => {
+    await s().calculate({ target: '#5b2a86', paints: [rojo, azul] })
+    const first = s().result
+    await s().calculate({ target: '#5b2a86', paints: [rojo, azul] })
+    expect(s().result).toBe(first)
+  })
+
+  it('cambiar el objetivo, las pinturas o la precisión invalida el resultado anterior', async () => {
+    await s().calculate({ target: '#5b2a86', paints: [rojo, azul] })
+    const k1 = s().result.key
+    await s().calculate({ target: '#2a9d8f', paints: [rojo, azul] })
+    expect(s().result.key).not.toBe(k1)
+    s().setMaxParts(6)
+    await s().calculate({ target: '#2a9d8f', paints: [rojo, azul] })
+    expect(s().result.key).toBe(resultKey('#2a9d8f', [rojo, azul], 6))
+  })
+
+  it('descarta una respuesta vieja si los datos cambiaron mientras se calculaba', async () => {
+    const slow = s().calculate({ target: '#5b2a86', paints: [rojo, azul] })
+    const fast = s().calculate({ target: '#2a9d8f', paints: [rojo, azul] })
+    await Promise.all([slow, fast])
+    await wait()
+    expect(s().result.key).toBe(resultKey('#2a9d8f', [rojo, azul], s().maxParts))
+  })
+
+  it('si las pinturas no alcanzan, guarda sugerencias', async () => {
+    await s().calculate({ target: '#d8c7f0', paints: [rojo, azul] })
+    await wait()
+    expect(s().result.data.best.deltaE).toBeGreaterThanOrEqual(5)
+    expect(s().result.suggestions.map((x) => x.role.name)).toContain('Blanco')
+  })
+
+  it('selectRecipe cambia la receta mostrada y un nuevo cálculo vuelve a la recomendada', async () => {
+    s().selectRecipe('best')
+    expect(s().recipeKey).toBe('best')
+    await s().calculate({ target: '#5b2a86', paints: [rojo, azul] })
+    expect(s().recipeKey).toBe('recommended')
+  })
+
+  it('reset limpia resultado y precisión', async () => {
+    await s().calculate({ target: '#5b2a86', paints: [rojo, azul] })
+    s().setMaxParts(16)
+    s().reset()
+    expect(s()).toMatchObject({ result: null, maxParts: 10 })
   })
 })

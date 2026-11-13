@@ -1,5 +1,5 @@
 import { PixelButton, PixelText, ColorSwatch } from '../../components/atoms/index.js'
-import { PaintsStep, TargetColorPicker } from '../../components/organisms/index.js'
+import { MixResult, PaintsStep, TargetColorPicker } from '../../components/organisms/index.js'
 import { WizardLayout } from '../../components/templates/index.js'
 import { authService } from '../../features/auth/index.js'
 import { TOTAL_STEPS, useMixStore } from '../../features/color-mixer/mixStore.js'
@@ -45,22 +45,22 @@ export default function Create() {
       <WizardLayout step={2} total={TOTAL_STEPS} title="Tus pinturas" onSignOut={signOut}>
         <div className={styles.stack}>
           <TargetReference color={targetColor} thumb={targetThumb} />
-          <PaintsStep onBack={back} onNext={next} />
+          <PaintsStep target={targetColor} onBack={back} onNext={next} />
         </div>
       </WizardLayout>
     )
   }
 
-  // Provisorio: el cálculo de proporciones llega en el próximo spec.
-  const chosen = paints.filter((p) => selectedIds.includes(p.id))
+  // Paso 3: la mezcla. Las pinturas se usan en el orden en que se eligieron.
+  const chosen = selectedIds.map((id) => paints.find((p) => p.id === id)).filter(Boolean)
+  const addPaint = (role) => {
+    usePaintsStore.getState().setPendingName(role.name)
+    back() // vuelve al paso 2, que abre el alta con ese nombre
+  }
   return (
-    <WizardLayout step={step} total={TOTAL_STEPS} title="Mezcla" onSignOut={signOut}>
+    <WizardLayout step={step} total={TOTAL_STEPS} title="Tu mezcla" onSignOut={signOut}>
       <div className={styles.stack}>
-        <TargetReference color={targetColor} thumb={targetThumb} />
-        <div className={styles.row}>
-          {chosen.map((p) => <ColorSwatch key={p.id} color={p.hex} label={p.name} />)}
-        </div>
-        <PixelText variant="body" tone="soft">Próximamente: calculamos las proporciones para lograr tu color.</PixelText>
+        <MixResult target={targetColor} paints={chosen} onAddPaint={addPaint} />
         <PixelButton variant="secondary" onClick={back}>Volver</PixelButton>
       </div>
     </WizardLayout>
