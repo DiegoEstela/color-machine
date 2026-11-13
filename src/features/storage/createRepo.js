@@ -1,6 +1,11 @@
+import { isNetworkError, offlineError } from './errors.js'
 import { supabase, requireUser } from './supabase.js'
 
-const toError = (error) => (error ? { code: error.code ?? 'db_error', message: error.message } : null)
+const toError = (error) => {
+  if (!error) return null
+  if (isNetworkError(error)) return offlineError()
+  return { code: error.code ?? 'db_error', message: error.message }
+}
 
 // owner_id lo fija la base (auth.uid()); nunca se acepta desde el cliente.
 const clean = ({ id: _id, owner_id: _owner, created_at: _created, ...values }) => values

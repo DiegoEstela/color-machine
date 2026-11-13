@@ -1,3 +1,4 @@
+import { isNetworkError, offlineError } from '../storage/errors.js'
 import { supabase } from '../storage/supabase.js'
 
 const MESSAGES = {
@@ -13,6 +14,7 @@ const MESSAGES = {
 
 export function toAuthError(error) {
   if (!error) return null
+  if (isNetworkError(error)) return offlineError()
   const code = error.code ?? 'auth_error'
   return { code, message: MESSAGES[code] ?? 'No pudimos completar la acción. Probá de nuevo.' }
 }

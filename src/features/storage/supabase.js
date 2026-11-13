@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { isNetworkError, offlineError } from './errors.js'
 
 const url = import.meta.env.VITE_SUPABASE_URL
 const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
@@ -12,7 +13,9 @@ export async function requireUser() {
     return { user: null, error: { code: 'not_configured', message: 'Supabase no está configurado.' } }
   }
   const { data, error } = await supabase.auth.getSession()
-  if (error) return { user: null, error: { code: 'auth_error', message: error.message } }
+  if (error) {
+    return { user: null, error: isNetworkError(error) ? offlineError() : { code: 'auth_error', message: error.message } }
+  }
   const user = data.session?.user ?? null
   if (!user) {
     return { user: null, error: { code: 'not_signed_in', message: 'Necesitás iniciar sesión.' } }

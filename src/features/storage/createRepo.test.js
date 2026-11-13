@@ -62,6 +62,14 @@ describe('createRepo', () => {
     expect(state.calls).toHaveLength(0)
   })
 
+  it('un fallo de red devuelve un mensaje claro de "sin conexión"', async () => {
+    state.result = { data: null, error: { message: 'TypeError: Failed to fetch' } }
+    const res = await createRepo('paints').list()
+    expect(res.data).toBeNull()
+    expect(res.error.code).toBe('offline')
+    expect(res.error.message).toMatch(/^Sin conexión/)
+  })
+
   it('normaliza errores de la base', async () => {
     state.result = { data: null, error: { code: '23514', message: 'check violation', details: 'x' } }
     const res = await createRepo('paints').create({ name: '', hex: 'zz' })

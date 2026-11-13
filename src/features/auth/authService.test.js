@@ -44,6 +44,12 @@ describe('authService', () => {
     const res = await svc.updatePassword('12345678')
     expect(res.error.message).not.toContain('stack')
   })
+  it('sin red devuelve un mensaje de "sin conexión" y no un error técnico', async () => {
+    h.client = makeClient({ signInWithPassword: vi.fn().mockResolvedValue({ data: null, error: { name: 'AuthRetryableFetchError', message: 'Failed to fetch' } }) })
+    const res = await svc.signIn('a@b.co', 'x')
+    expect(res.error.code).toBe('offline')
+    expect(res.error.message).toMatch(/^Sin conexión/)
+  })
   it('sin cliente devuelve not_configured', async () => {
     h.client = null
     expect((await svc.signIn('a@b.co', 'x')).error.code).toBe('not_configured')

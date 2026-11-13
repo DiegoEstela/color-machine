@@ -34,4 +34,14 @@ describe('requireUser', () => {
     expect(error).toBeNull()
     expect(user.id).toBe('u1')
   })
+
+  it('si la sesión falla por falta de red devuelve "sin conexión"', async () => {
+    vi.stubEnv('VITE_SUPABASE_URL', 'https://example.supabase.co')
+    vi.stubEnv('VITE_SUPABASE_ANON_KEY', 'test-key')
+    vi.resetModules()
+    const { supabase, requireUser } = await import('./supabase.js')
+    vi.spyOn(supabase.auth, 'getSession').mockResolvedValue({ data: { session: null }, error: { name: 'AuthRetryableFetchError', message: 'Failed to fetch' } })
+    const { error } = await requireUser()
+    expect(error.code).toBe('offline')
+  })
 })

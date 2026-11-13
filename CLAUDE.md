@@ -20,6 +20,13 @@ Vite + React (JavaScript, sin TypeScript) · Zustand (estado) · CSS Modules + t
 
 Librerías de color: `culori` (conversiones y distancia ΔE) y `spectral.js` (mezcla de pigmentos tipo Kubelka-Munk, MIT). No usar Mixbox (licencia no comercial).
 
+## PWA (app instalable)
+- Config en `src/pwa/pwaConfig.js` (manifest y service worker), conectada en `vite.config.js`. El service worker **no se activa en desarrollo**: para probarlo, `npm run build && npx vite preview`.
+- **Nunca cachear Supabase** (datos ni sesión): todo lo que no sea del propio origen va a la red (`NetworkOnly`).
+- Íconos en `public/icons/`, generados desde el logo pixel con `npm run icons` (usa Chrome, sin dependencias). Si cambia el logo o el color de la barra superior, regenerarlos.
+- Las versiones nuevas se instalan en segundo plano y se activan al abrir la app de nuevo (no se recarga en medio de una mezcla). Si algo queda desactualizado, ver `src/main.jsx`.
+- Errores de red: usar `features/storage/errors.js` (`isNetworkError`, `offlineError`) para mostrar "Sin conexión…" en vez de errores técnicos.
+
 ## Supabase
 - Cliente único en `src/features/storage/supabase.js`; leer `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` de `.env` (ver `.env.example`). **Nunca commitear `.env` ni claves `service_role`.**
 - Cambios de esquema: archivos SQL numerados en `supabase/migrations/`. Toda tabla con Row Level Security activada.
