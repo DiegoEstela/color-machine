@@ -1,0 +1,59 @@
+/* Design tokens. Única fuente de verdad visual: no usar valores sueltos en componentes. */
+:root {
+  /* Superficies (pastel claro, neutras para que resalten los colores del usuario) */
+  --color-bg: #fdf8f3;
+  --color-surface: #ffffff;
+  --color-surface-alt: #f3eefb;
+
+  /* Texto y líneas */
+  --color-ink: #3b3650;
+  --color-ink-soft: #625d7b;
+  --color-line: #3b3650;
+  --color-focus: #6b4fd8;
+
+  /* Acentos pastel */
+  --color-pink: #ffc8dd;
+  --color-blue: #bde0fe;
+  --color-mint: #b9fbc0;
+  --color-yellow: #fdf0a6;
+  --color-lavender: #cdb4db;
+  --color-danger: #ffb3b3;
+  --color-disabled: #e6e2ec;
+
+  /* Tipografía */
+  --font-pixel: 'Press Start 2P', ui-monospace, monospace;
+  --font-body: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --text-xs: 0.625rem;
+  --text-sm: 0.75rem;
+  --text-md: 0.875rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.5rem;
+  --text-body: 1rem;
+  --leading-pixel: 1.6;
+  --leading-body: 1.5;
+
+  /* Espaciado (escala de 4px) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  /* Bordes y sombras pixel */
+  --border-w: 3px;
+  --border-w-lg: 4px;
+  --shadow-step: 4px;
+  --shadow-pixel: var(--shadow-step) var(--shadow-step) 0 var(--color-line);
+  --shadow-pixel-pressed: 0 0 0 var(--color-line);
+
+  /* Tamaños táctiles */
+  --touch-min: 48px;
+
+  /* Capas y tiempos */
+  --z-header: 10;
+  --z-modal: 100;
+  --dur-fast: 80ms;
+  --dur-base: 160ms;
+}

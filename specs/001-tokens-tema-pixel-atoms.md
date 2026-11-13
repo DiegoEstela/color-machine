@@ -1,6 +1,6 @@
 # 001 — Tokens, tema pixel y atoms
 
-- **Estado:** borrador
+- **Estado:** implementado
 - **Fecha:** 2026-11-13
 
 ## Objetivo
@@ -57,13 +57,13 @@ Las moléculas y organismos de los hitos siguientes se construirán combinando e
 No aplica en este spec.
 
 ## Criterios de aceptación
-- [ ] Ningún componente usa colores, tamaños ni fuentes fuera de `tokens.css`.
-- [ ] El catálogo se ve sin scroll horizontal a 360 px y mantiene el aspecto en escritorio.
-- [ ] Todos los átomos tienen estados `hover`, `focus-visible`, `active` y `disabled` cuando aplica, con foco visible.
-- [ ] El contraste del texto sobre su fondo cumple WCAG AA.
-- [ ] Con `prefers-reduced-motion` no hay animaciones ni transiciones.
-- [ ] La fuente pixel se sirve desde el propio bundle (sin peticiones externas).
-- [ ] `npm test`, `npm run lint` y `npm run build` pasan.
+- [x] Ningún componente usa colores, tamaños ni fuentes fuera de `tokens.css`.
+- [x] El catálogo se ve sin scroll horizontal a 360 px y mantiene el aspecto en escritorio.
+- [x] Todos los átomos tienen estados `hover`, `focus-visible`, `active` y `disabled` cuando aplica, con foco visible.
+- [x] El contraste del texto sobre su fondo cumple WCAG AA.
+- [x] Con `prefers-reduced-motion` no hay animaciones ni transiciones.
+- [x] La fuente pixel se sirve desde el propio bundle (sin peticiones externas).
+- [x] `npm test`, `npm run lint` y `npm run build` pasan.
 
 ## Riesgos y preguntas abiertas
 - **Legibilidad**: Press Start 2P cansa en párrafos largos. Propuesta: usarla solo en títulos, botones y etiquetas cortas, y una fuente de sistema para el resto. ¿Te parece bien?

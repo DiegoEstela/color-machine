@@ -1,3 +1,5 @@
+import Catalog from './pages/Catalog/Catalog.jsx'
+
 export default function App() {
-  return <main>Color Machine</main>
+  return <Catalog />
 }

@@ -1,0 +1,14 @@
+.swatch {
+  display: block;
+  padding: 0;
+  background: var(--swatch-color);
+  border: var(--border-w) solid var(--color-line);
+  box-shadow: var(--shadow-pixel);
+}
+.swatch[data-size='sm'] { width: 32px; height: 32px; }
+.swatch[data-size='md'] { width: var(--touch-min); height: var(--touch-min); }
+.swatch[data-size='lg'] { width: 96px; height: 96px; }
+.swatch[data-size='xl'] { width: 100%; height: 160px; }
+button.swatch { cursor: pointer; }
+button.swatch:active { transform: translate(var(--shadow-step), var(--shadow-step)); box-shadow: var(--shadow-pixel-pressed); }
+.swatch[data-selected] { outline: var(--border-w-lg) solid var(--color-focus); outline-offset: 3px; }

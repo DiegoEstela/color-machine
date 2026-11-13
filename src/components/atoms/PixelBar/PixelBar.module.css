@@ -1,0 +1,9 @@
+.bar {
+  display: flex;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  background: var(--color-surface);
+  border: var(--border-w) solid var(--color-line);
+}
+.segment { flex: 1; height: 16px; background: var(--color-disabled); }
+.segment[data-filled] { background: var(--bar-color, var(--color-lavender)); }

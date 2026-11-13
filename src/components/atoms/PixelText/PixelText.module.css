@@ -1,0 +1,11 @@
+.text { margin: 0; color: var(--color-ink); }
+.text[data-variant='pixel'] { font-family: var(--font-pixel); line-height: var(--leading-pixel); }
+.text[data-variant='body'] { font-family: var(--font-body); line-height: var(--leading-body); }
+.text[data-tone='soft'] { color: var(--color-ink-soft); }
+.text[data-tone='danger'] { color: #8f1d2c; }
+.text[data-size='xs'] { font-size: var(--text-xs); }
+.text[data-size='sm'] { font-size: var(--text-sm); }
+.text[data-size='md'] { font-size: var(--text-md); }
+.text[data-size='lg'] { font-size: var(--text-lg); }
+.text[data-size='xl'] { font-size: var(--text-xl); }
+.text[data-variant='body'][data-size='md'] { font-size: var(--text-body); }

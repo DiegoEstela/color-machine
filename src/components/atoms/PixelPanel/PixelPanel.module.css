@@ -1,0 +1,11 @@
+.panel {
+  background: var(--color-surface);
+  border: var(--border-w-lg) solid var(--color-line);
+  box-shadow: var(--shadow-pixel);
+}
+.panel[data-tone='lavender'] { background: var(--color-surface-alt); }
+.panel[data-tone='yellow'] { background: var(--color-yellow); }
+.panel[data-tone='mint'] { background: var(--color-mint); }
+.panel[data-padding='sm'] { padding: var(--space-3); }
+.panel[data-padding='md'] { padding: var(--space-4); }
+.panel[data-padding='lg'] { padding: var(--space-5); }
