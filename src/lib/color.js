@@ -71,3 +71,38 @@ export function averageRegion({ data, width, height }, x, y, radius = 2) {
   if (n === 0) return null
   return formatHex({ mode: 'rgb', r: r / n / 255, g: g / n / 255, b: b / n / 255 })
 }
+
+const MAX_SAMPLES = 10000
+
+/**
+ * Color de un recorte: promedio recortado (descarta los píxeles más claros y más oscuros)
+ * para que un brillo o un reflejo pequeño no altere el resultado.
+ * `rect` normalizado { x, y, w, h } (0–1). Muestrea como máximo ~10 000 píxeles.
+ * Devuelve null si no hay píxeles opacos.
+ */
+export function averageRect({ data, width, height }, rect, { trim = 0.1 } = {}) {
+  const x0 = Math.max(0, Math.floor(rect.x * width))
+  const y0 = Math.max(0, Math.floor(rect.y * height))
+  const x1 = Math.min(width, Math.max(x0 + 1, Math.ceil((rect.x + rect.w) * width)))
+  const y1 = Math.min(height, Math.max(y0 + 1, Math.ceil((rect.y + rect.h) * height)))
+  const step = Math.max(1, Math.floor(Math.sqrt(((x1 - x0) * (y1 - y0)) / MAX_SAMPLES)))
+
+  const pixels = []
+  for (let y = y0; y < y1; y += step) {
+    for (let x = x0; x < x1; x += step) {
+      const i = (y * width + x) * 4
+      if (data[i + 3] === 0) continue
+      const r = data[i], g = data[i + 1], b = data[i + 2]
+      pixels.push({ r, g, b, lum: 0.2126 * r + 0.7152 * g + 0.0722 * b })
+    }
+  }
+  if (pixels.length === 0) return null
+
+  pixels.sort((a, b) => a.lum - b.lum)
+  const cut = Math.floor(pixels.length * trim)
+  const kept = pixels.length - 2 * cut >= 1 ? pixels.slice(cut, pixels.length - cut) : pixels
+  let r = 0, g = 0, b = 0
+  for (const p of kept) { r += p.r; g += p.g; b += p.b }
+  const n = kept.length
+  return formatHex({ mode: 'rgb', r: r / n / 255, g: g / n / 255, b: b / n / 255 })
+}

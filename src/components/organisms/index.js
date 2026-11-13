@@ -1,2 +1,5 @@
 export { default as AuthForm } from './AuthForm/AuthForm.jsx'
 export { default as TargetColorPicker } from './TargetColorPicker/TargetColorPicker.jsx'
+export { default as PaintCapture } from './PaintCapture/PaintCapture.jsx'
+export { default as PaintList } from './PaintList/PaintList.jsx'
+export { default as PaintsStep } from './PaintsStep/PaintsStep.jsx'

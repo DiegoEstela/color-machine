@@ -1,37 +1,16 @@
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import { averageRegion } from '../../../lib/color.js'
-import { loadImageToCanvas } from '../../../lib/image.js'
+import { useImageCanvas } from '../../../hooks/useImageCanvas.js'
 import styles from './PhotoColorPicker.module.css'
 
 const SAMPLE_RADIUS = 2 // región de 5x5 px
 
-const errorMessage = (err) =>
-  err?.code === 'not_image' ? 'El archivo no es una imagen.' : 'No pudimos abrir la foto. Probá con otra.'
-
 /** Muestra la foto y, al tocar un punto, entrega el color promedio de su entorno. */
 export default function PhotoColorPicker({ file, onPick, onError }) {
-  const canvasRef = useRef(null)
-  // Se guarda a qué archivo pertenece cada estado, así cambiar de foto los invalida sin efectos extra.
-  const [loadedFile, setLoadedFile] = useState(null)
+  const { canvasRef, ready } = useImageCanvas(file, onError)
+  // Se guarda a qué archivo pertenece la marca, así cambiar de foto la invalida sin efectos extra.
   const [markState, setMarkState] = useState(null)
-  const ready = loadedFile === file
   const mark = markState?.file === file ? markState : null
-
-  useEffect(() => {
-    let cancelled = false
-    if (!file) return undefined
-    loadImageToCanvas(file)
-      .then((source) => {
-        if (cancelled || !canvasRef.current) return
-        const canvas = canvasRef.current
-        canvas.width = source.width
-        canvas.height = source.height
-        canvas.getContext('2d')?.drawImage(source, 0, 0)
-        setLoadedFile(file)
-      })
-      .catch((err) => { if (!cancelled) onError?.(errorMessage(err)) })
-    return () => { cancelled = true }
-  }, [file, onError])
 
   if (!file) return null
 

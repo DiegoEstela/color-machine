@@ -10,6 +10,6 @@
   box-shadow: inset var(--space-1) var(--space-1) 0 var(--color-surface-alt);
 }
 .input::placeholder { color: var(--color-ink-soft); }
-.input[aria-invalid='true'] { border-color: #8f1d2c; }
+.input[aria-invalid='true'] { border-color: var(--color-danger-ink); }
 .input:disabled { background: var(--color-disabled); color: var(--color-ink-soft); }
-.error { font-size: var(--text-sm); color: #8f1d2c; }
+.error { font-size: var(--text-sm); color: var(--color-danger-ink); }

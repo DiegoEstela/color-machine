@@ -1,0 +1,25 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  list-style: none;
+  background: var(--color-surface);
+  border: var(--border-w) solid var(--color-line);
+  box-shadow: var(--shadow-pixel);
+}
+.card[data-selected] { background: var(--color-mint); }
+.main {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--touch-min);
+  padding: 0;
+  text-align: left;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.text { display: flex; flex-direction: column; gap: var(--space-1); flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.thumb { width: var(--touch-min); height: var(--touch-min); object-fit: cover; border: var(--border-w) solid var(--color-line); image-rendering: pixelated; }
+.actions { display: flex; flex-wrap: wrap; gap: var(--space-2); justify-content: flex-end; }

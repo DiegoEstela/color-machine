@@ -40,4 +40,25 @@ describe('TargetColorPicker', () => {
     expect(screen.getByRole('button', { name: /Cámara/ })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Galería/ })).toBeInTheDocument()
   })
+
+  it('muestra la miniatura del recorte como referencia', () => {
+    render(<TargetColorPicker value="#e63946" thumbnail="data:image/png;base64,AAA" onChange={() => {}} onNext={() => {}} />)
+    expect(screen.getByAltText('Recorte de la foto')).toHaveAttribute('src', 'data:image/png;base64,AAA')
+  })
+
+  it('en la pestaña Foto se puede elegir entre Recorte y Punto', () => {
+    render(<TargetColorPicker value={null} onChange={() => {}} onNext={() => {}} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Foto' }))
+    expect(screen.getByRole('button', { name: 'Recorte' })).toHaveAttribute('aria-pressed', 'true')
+    fireEvent.click(screen.getByRole('button', { name: 'Punto' }))
+    expect(screen.getByRole('button', { name: 'Punto' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByText(/Tocá un punto de la foto/)).toBeInTheDocument()
+  })
+
+  it('un color escrito a mano descarta la miniatura anterior', () => {
+    const onThumbnail = vi.fn()
+    render(<TargetColorPicker value="#e63946" thumbnail="data:x" onChange={() => {}} onThumbnail={onThumbnail} onNext={() => {}} />)
+    fireEvent.change(screen.getByLabelText('Color (hex)'), { target: { value: '#00ff00' } })
+    expect(onThumbnail).toHaveBeenCalledWith(null)
+  })
 })

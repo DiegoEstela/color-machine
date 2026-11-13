@@ -29,4 +29,13 @@ describe('mixStore', () => {
     for (let i = 0; i < 6; i++) s().next()
     expect(s().step).toBe(3)
   })
+  it('guarda la miniatura del objetivo y reset la limpia', () => {
+    s().setTargetThumb('data:thumb')
+    expect(s().targetThumb).toBe('data:thumb')
+    s().setTargetThumb(null)
+    expect(s().targetThumb).toBeNull()
+    s().setTargetThumb('data:x')
+    s().reset()
+    expect(s().targetThumb).toBeNull()
+  })
 })

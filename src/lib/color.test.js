@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
-  normalizeHex, isValidHex, hexToHsl, hslToHex, wheelPointToHsl, hslToWheelPoint, averageRegion,
+  normalizeHex, isValidHex, hexToHsl, hslToHex, wheelPointToHsl, hslToWheelPoint, averageRegion, averageRect,
 } from './color.js'
 
 describe('normalizeHex', () => {
@@ -79,5 +79,38 @@ describe('averageRegion', () => {
     expect(averageRegion(make(3, 3, () => [9, 9, 9, 0]), 1, 1)).toBeNull()
     const img = make(2, 1, (i) => (i === 0 ? [255, 0, 0, 255] : [0, 255, 0, 0]))
     expect(averageRegion(img, 0, 0, 2)).toBe('#ff0000')
+  })
+})
+
+describe('averageRect', () => {
+  const FULL = { x: 0, y: 0, w: 1, h: 1 }
+  const make = (w, h, fill) => {
+    const data = new Uint8ClampedArray(w * h * 4)
+    for (let i = 0; i < w * h; i++) data.set(fill(i), i * 4)
+    return { data, width: w, height: h }
+  }
+  it('promedia una zona uniforme', () => {
+    expect(averageRect(make(20, 20, () => [255, 0, 0, 255]), FULL)).toBe('#ff0000')
+  })
+  it('solo mira dentro del recorte', () => {
+    const img = make(10, 10, (i) => (i % 10 < 5 ? [255, 0, 0, 255] : [0, 0, 255, 255]))
+    expect(averageRect(img, { x: 0, y: 0, w: 0.5, h: 1 })).toBe('#ff0000')
+    expect(averageRect(img, { x: 0.5, y: 0, w: 0.5, h: 1 })).toBe('#0000ff')
+  })
+  it('un brillo pequeño no altera el color (promedio recortado)', () => {
+    // 100 píxeles grises con 5 reflejos blancos
+    const img = make(10, 10, (i) => (i < 5 ? [255, 255, 255, 255] : [128, 128, 128, 255]))
+    expect(averageRect(img, FULL)).toBe('#808080')
+    expect(averageRect(img, FULL, { trim: 0 })).not.toBe('#808080')
+  })
+  it('muestrea recortes grandes sin recorrer todos los píxeles', () => {
+    const img = make(1024, 1024, () => [10, 20, 30, 255])
+    expect(averageRect(img, FULL)).toBe('#0a141e')
+  })
+  it('ignora transparentes y devuelve null si no queda nada', () => {
+    expect(averageRect(make(4, 4, () => [1, 2, 3, 0]), FULL)).toBeNull()
+  })
+  it('un recorte diminuto siempre incluye al menos un píxel', () => {
+    expect(averageRect(make(10, 10, () => [0, 255, 0, 255]), { x: 0.5, y: 0.5, w: 0.001, h: 0.001 })).toBe('#00ff00')
   })
 })

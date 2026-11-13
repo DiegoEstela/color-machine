@@ -19,6 +19,8 @@
   --color-lavender: #cdb4db;
   --color-danger: #ffb3b3;
   --color-disabled: #e6e2ec;
+  --color-danger-ink: #8f1d2c;
+  --color-scrim: rgb(59 54 80 / 0.5);
 
   /* Tipografía */
   --font-pixel: 'Press Start 2P', ui-monospace, monospace;

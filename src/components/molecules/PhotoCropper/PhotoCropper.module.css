@@ -1,0 +1,34 @@
+.frame {
+  position: relative;
+  line-height: 0;
+  border: var(--border-w-lg) solid var(--color-line);
+  box-shadow: var(--shadow-pixel);
+  background: var(--color-surface-alt);
+  overflow: hidden;
+}
+.canvas { display: block; width: 100%; height: auto; max-height: 60dvh; image-rendering: auto; }
+.overlay { position: absolute; inset: 0; }
+
+.box {
+  position: absolute;
+  border: var(--border-w) solid var(--color-surface);
+  outline: var(--border-w) solid var(--color-line);
+  box-shadow: 0 0 0 100vmax var(--color-scrim); /* oscurece lo que queda fuera del recorte */
+  cursor: move;
+  touch-action: none;
+}
+
+/* Esquinas: el cuadrado visible es chico, la zona táctil (::after) llega a 44px. */
+.handle {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  background: var(--color-pink);
+  border: var(--border-w) solid var(--color-line);
+  touch-action: none;
+}
+.handle::after { content: ''; position: absolute; inset: -14px; }
+.handle[data-handle='nw'] { left: -10px; top: -10px; cursor: nwse-resize; }
+.handle[data-handle='ne'] { right: -10px; top: -10px; cursor: nesw-resize; }
+.handle[data-handle='sw'] { left: -10px; bottom: -10px; cursor: nesw-resize; }
+.handle[data-handle='se'] { right: -10px; bottom: -10px; cursor: nwse-resize; }

@@ -26,3 +26,19 @@ export async function loadImageToCanvas(file, maxSize = 1024) {
   bitmap.close?.()
   return canvas
 }
+
+/**
+ * Copia la zona `rect` (normalizada) de `source` a un canvas chico (lado mayor <= size).
+ * Devuelve `{ imageData, thumbnail }`: los píxeles para calcular el color y una miniatura en data URL.
+ */
+export function sampleCrop(source, rect, size = 96) {
+  const sw = Math.max(1, Math.round(rect.w * source.width))
+  const sh = Math.max(1, Math.round(rect.h * source.height))
+  const { width, height } = fitSize(sw, sh, size)
+  const canvas = document.createElement('canvas')
+  canvas.width = width
+  canvas.height = height
+  const ctx = canvas.getContext('2d')
+  ctx.drawImage(source, Math.round(rect.x * source.width), Math.round(rect.y * source.height), sw, sh, 0, 0, width, height)
+  return { imageData: ctx.getImageData(0, 0, width, height), thumbnail: canvas.toDataURL('image/png') }
+}
