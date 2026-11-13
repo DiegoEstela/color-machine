@@ -1,10 +1,11 @@
-import { useEffect } from 'react'
-import { PixelButton, PixelIcon, PixelPanel, PixelText } from '../../atoms/index.js'
-import { ColorCompare, MixingAnimation, OptionGroup, RecipeRow, SaveRecipe } from '../../molecules/index.js'
+import { useEffect, useRef, useState } from 'react'
+import { PixelButton, PixelIconButton, PixelPanel, PixelText } from '../../atoms/index.js'
+import { ColorCompare, InfoSheet, MixingAnimation, OptionGroup, RecipeRow, SaveRecipe } from '../../molecules/index.js'
 import { diagnose } from '../../../features/color-mixer/advisor.js'
 import { resultKey, useMixStore } from '../../../features/color-mixer/mixStore.js'
 import { describeQuality, PRECISION } from '../../../features/color-mixer/solver.js'
 import { ROUTES, navigate } from '../../../features/navigation/useRoute.js'
+import { MAX_SELECTED } from '../../../features/paints/paintsStore.js'
 import { useRecipesStore } from '../../../features/recipes/recipesStore.js'
 import { buildRecipePayload, recipeSignature } from '../../../features/recipes/validation.js'
 import styles from './MixResult.module.css'
@@ -24,46 +25,41 @@ const PRECISIONS = [
   },
 ]
 
+// Solo dos opciones y sin frase explicativa: así entra en una fila y la pantalla queda corta.
 const RECIPE_OPTIONS = [
-  { id: 'recommended', label: 'Recomendada', hint: 'la más simple', description: 'La más simple que queda casi igual de cerca que la mejor.' },
-  { id: 'best', label: 'Más exacta', hint: 'la que más se parece', description: 'La que más se acerca a tu color, aunque lleve más partes.' },
-  { id: 'others', label: 'Otras', hint: 'variantes', description: 'Recetas distintas con un parecido similar, por si te falta alguna pintura.' },
+  { id: 'recommended', label: 'Recomendada', hint: 'la más simple' },
+  { id: 'best', label: 'Más exacta', hint: 'la que más se parece' },
 ]
-
-const sameRecipe = (a, b) =>
-  a.parts.length === b.parts.length && a.parts.every((p, i) => p.paintId === b.parts[i].paintId && p.parts === b.parts[i].parts)
-
-function RecipeView({ recipe, target, save }) {
-  return (
-    <div className={styles.recipe}>
-      <ColorCompare target={target} mix={recipe.mixHex} quality={recipe.quality} deltaE={recipe.deltaE} />
-      <ul className={styles.rows}>
-        {recipe.parts.map((p) => (
-          <RecipeRow key={p.paintId} name={p.name} hex={p.hex} parts={p.parts} total={recipe.total} />
-        ))}
-      </ul>
-      <PixelText size="xs" tone="soft">Total: {recipe.total} {recipe.total === 1 ? 'parte' : 'partes'} en total</PixelText>
-      <SaveRecipe saved={save.saved} onSave={save.onSave} onOpenLibrary={save.onOpenLibrary} />
-    </div>
-  )
-}
 
 /**
  * Paso 3: calcula y muestra cuántas partes de cada pintura mezclar.
- * `paints` = pinturas elegidas [{ id, name, hex }]. `onAddPaint(role)` se llama al pedir sumar una pintura base.
+ * `paints` = pinturas elegidas [{ id, name, hex }]. A ellas se suman las pinturas estándar que el usuario agregó
+ * desde acá con "+ Color". `onAddPaint(pintura)` se llama al querer reemplazar una estándar por la propia.
  */
 export default function MixResult({ target, paints, onAddPaint }) {
   const maxParts = useMixStore((s) => s.maxParts)
   const recipeKey = useMixStore((s) => s.recipeKey)
   const result = useMixStore((s) => s.result)
   const savedRecipes = useMixStore((s) => s.savedRecipes)
-  const { calculate, setMaxParts, selectRecipe } = useMixStore.getState()
+  const extraPaints = useMixStore((s) => s.extraPaints)
+  const { calculate, setMaxParts, selectRecipe, addExtra, removeExtra } = useMixStore.getState()
+  const [infoOpen, setInfoOpen] = useState(false)
+  const rowsRef = useRef(null)
 
-  const key = resultKey(target, paints, maxParts)
-  useEffect(() => { calculate({ target, paints }) }, [key]) // eslint-disable-line -- `key` resume target, paints y maxParts
+  const allPaints = [...paints, ...extraPaints]
+  const key = resultKey(target, allPaints, maxParts)
+  useEffect(() => { calculate({ target, paints: allPaints }) }, [key]) // eslint-disable-line -- `key` resume target, pinturas y maxParts
 
   const current = result?.key === key ? result : null // un resultado de otros datos no se muestra
-  const retry = () => { useMixStore.setState({ result: null }); calculate({ target, paints }) }
+
+  // Al sumar una pintura estándar, la lista baja hasta mostrarla completa (con su etiqueta y sus acciones).
+  useEffect(() => {
+    if (current?.status === 'ready' && extraPaints.length > 0) {
+      rowsRef.current?.scrollTo?.({ top: rowsRef.current.scrollHeight })
+    }
+  }, [current?.status, extraPaints.length, key]) // eslint-disable-line -- `current` cambia en cada render; `status` y `key` lo resumen
+  const retry = () => { useMixStore.setState({ result: null }); calculate({ target, paints: allPaints }) }
+  const atLimit = allPaints.length >= MAX_SELECTED
 
   // Guardar una receta: se guarda una copia (nombre, color y partes) y se recuerda para no duplicarla.
   const saveFor = (recipe) => {
@@ -74,30 +70,55 @@ export default function MixResult({ target, paints, onAddPaint }) {
       onSave: async (name) => {
         const built = buildRecipePayload({ name, targetHex: target, recipe })
         if (built.error) return { error: built.error }
-        const result = await useRecipesStore.getState().add(built.payload)
-        if (result.error) return { error: result.error }
-        useMixStore.getState().markSaved(signature, result.data.id)
+        const added = await useRecipesStore.getState().add(built.payload)
+        if (added.error) return { error: added.error }
+        useMixStore.getState().markSaved(signature, added.data.id)
         return {}
       },
     }
   }
 
   const precisionId = (PRECISIONS.find((p) => p.parts === maxParts) ?? PRECISIONS[1]).id
-  const precision = (
-    <OptionGroup
-      label="¿Qué tan exacta querés la receta?"
-      options={PRECISIONS}
-      columns={3}
-      value={precisionId}
-      onChange={(id) => setMaxParts(PRECISIONS.find((p) => p.id === id).parts)}
-    />
+  const active = RECIPE_OPTIONS.some((o) => o.id === recipeKey) ? recipeKey : 'recommended'
+
+  const groups = (
+    <>
+      <OptionGroup
+        label="¿Qué tan exacta querés la receta?"
+        options={PRECISIONS}
+        columns={3}
+        value={precisionId}
+        onChange={(id) => setMaxParts(PRECISIONS.find((p) => p.id === id).parts)}
+      />
+      <OptionGroup
+        label="¿Qué receta querés ver?"
+        options={RECIPE_OPTIONS}
+        columns={2}
+        value={active}
+        onChange={selectRecipe}
+        labelAction={<PixelIconButton icon="info" size="sm" hitBias="up" label="Cómo leer tu receta" onClick={() => setInfoOpen(true)} />}
+      />
+    </>
   )
 
+  const sheet = (
+    <InfoSheet open={infoOpen} onClose={() => setInfoOpen(false)} title="Cómo leer tu receta">
+      <PixelText variant="body">1 parte = la medida que quieras (una cucharada, una tapita). Usá la misma para todas las pinturas.</PixelText>
+      <PixelText variant="body">Es una aproximación: probá con una cantidad chica antes de mezclar todo.</PixelText>
+      <PixelText variant="body">
+        Las pinturas «estándar» (las que sumás con «+ Blanco», «+ Negro»…) usan un color típico de caja de témperas.
+        Si la tuya es distinta, el resultado puede variar: tocá «Usar la mía» para reemplazarla.
+      </PixelText>
+    </InfoSheet>
+  )
+
+  // La zona del resultado tiene siempre el mismo alto, mientras mezcla y cuando muestra la receta.
   if (!current || current.status === 'mixing') {
     return (
       <div className={styles.root}>
-        {precision}
-        <MixingAnimation colors={paints.map((p) => p.hex)} />
+        {groups}
+        <div className={styles.zone}><MixingAnimation colors={allPaints.map((p) => p.hex)} /></div>
+        {sheet}
       </div>
     )
   }
@@ -105,73 +126,85 @@ export default function MixResult({ target, paints, onAddPaint }) {
   if (current.status === 'error' || !current.data) {
     return (
       <div className={styles.root}>
-        {precision}
-        <PixelText variant="body" tone="danger" role="alert">No pudimos calcular la mezcla.</PixelText>
-        <PixelButton variant="secondary" onClick={retry}>Reintentar</PixelButton>
+        {groups}
+        <div className={styles.zone} data-state="error">
+          <PixelText variant="body" tone="danger" role="alert">No pudimos calcular la mezcla.</PixelText>
+          <PixelButton variant="secondary" onClick={retry}>Reintentar</PixelButton>
+        </div>
+        {sheet}
       </div>
     )
   }
 
-  const { recommended, best, alternatives } = current.data
-  const options = alternatives.length > 0 ? RECIPE_OPTIONS : RECIPE_OPTIONS.filter((o) => o.id !== 'others')
-  const active = options.some((o) => o.id === recipeKey) ? recipeKey : 'recommended'
+  const { recommended, best } = current.data
   const shown = active === 'best' ? best : recommended
   const problems = diagnose(target, shown)
   const suggestions = current.suggestions.slice(0, 2)
+  const extraById = new Map(extraPaints.map((p) => [p.id, p]))
 
   return (
     <div className={styles.root}>
-      {precision}
-      <OptionGroup label="¿Qué receta querés ver?" options={options} columns={2} value={active} onChange={selectRecipe} />
+      {groups}
 
-      {active === 'others' ? (
-        alternatives.map((alt, i) => (
-          <section key={i} aria-label={`Opción ${i + 1}`} className={styles.option}>
-            <PixelText size="xs">Opción {i + 1}</PixelText>
-            <RecipeView recipe={alt} target={target} save={saveFor(alt)} />
-          </section>
-        ))
-      ) : (
-        <>
-          {active === 'best' && sameRecipe(best, recommended) && (
-            <PixelText variant="body" size="sm" tone="soft">Es la misma que la recomendada.</PixelText>
-          )}
-          <RecipeView recipe={shown} target={target} save={saveFor(shown)} />
-        </>
-      )}
-
-      <PixelPanel tone="sky" padding="sm" role="note" aria-label="Qué es una parte">
-        <div className={styles.info}>
-          <PixelIcon name="info" size={20} />
-          <PixelText variant="body" size="sm">
-            1 parte = la medida que quieras (una cucharada, una tapita). Usá la misma para todas las pinturas.
-          </PixelText>
-        </div>
-      </PixelPanel>
+      <div className={styles.zone}>
+        <ColorCompare compact target={target} mix={shown.mixHex} quality={shown.quality} deltaE={shown.deltaE} />
+        <ul ref={rowsRef} className={styles.rows} data-has-standard={extraPaints.length > 0 || undefined}>
+          {shown.parts.map((p) => {
+            const extra = extraById.get(p.paintId)
+            return (
+              <RecipeRow
+                key={p.paintId}
+                name={p.name}
+                hex={p.hex}
+                parts={p.parts}
+                total={shown.total}
+                standard={Boolean(extra)}
+                onRemove={() => removeExtra(p.paintId)}
+                onUseMine={() => { removeExtra(p.paintId); onAddPaint(extra) }}
+              />
+            )
+          })}
+        </ul>
+      </div>
 
       {problems.length > 0 && (
-        <PixelPanel tone="yellow" padding="sm" role="note" aria-label="Con estas pinturas no se llega del todo" title="Con estas pinturas no se llega del todo">
+        <PixelPanel tone="yellow" padding="xs" role="note" aria-label="Con estas pinturas no se llega del todo">
           <div className={styles.advice}>
-            <ul className={styles.list}>
-              {problems.map((d) => <li key={d.code}><PixelText variant="body" size="sm">{d.message}</PixelText></li>)}
-            </ul>
-            {suggestions.map((s) => (
-              <div key={s.role.id} className={styles.suggestion}>
-                <PixelText variant="body" size="sm">
-                  Con {s.role.name} quedaría {describeQuality(s.deltaE).toLowerCase()}.
-                </PixelText>
-                <PixelButton size="sm" variant="secondary" icon="jar" onClick={() => onAddPaint(s.role)}>
-                  Agregar {s.role.name}
-                </PixelButton>
+            <PixelText variant="body" size="sm">{problems.map((d) => d.message).join(' ')}</PixelText>
+            {suggestions.length > 0 && (
+              <div className={styles.suggestions}>
+                {suggestions.map((s) => (
+                  <PixelButton
+                    key={s.role.id}
+                    size="sm"
+                    variant="secondary"
+                    icon="plus"
+                    disabled={atLimit}
+                    aria-label={`Sumar ${s.role.name}, quedaría ${describeQuality(s.deltaE).toLowerCase()}`}
+                    onClick={() => addExtra(s.role)}
+                  >
+                    <span className={styles.suggestion}>
+                      <span>{s.role.name}</span>
+                      <span className={styles.hint}>quedaría {describeQuality(s.deltaE).toLowerCase()}</span>
+                    </span>
+                  </PixelButton>
+                ))}
               </div>
-            ))}
+            )}
+            {atLimit && suggestions.length > 0 && (
+              <PixelText variant="body" size="sm" tone="soft" role="status">
+                Ya usás {MAX_SELECTED} pinturas, el máximo por mezcla. Quitá una para sumar otra.
+              </PixelText>
+            )}
           </div>
         </PixelPanel>
       )}
 
-      <PixelText variant="body" size="sm" tone="soft">
-        Es una aproximación: probá con una cantidad chica antes de mezclar todo.
-      </PixelText>
+      <SaveRecipe {...saveProps(saveFor(shown))} />
+      {sheet}
     </div>
   )
 }
+
+// SaveRecipe recibe los nombres de props de su propia API.
+const saveProps = ({ saved, onSave, onOpenLibrary }) => ({ saved, onSave, onOpenLibrary })

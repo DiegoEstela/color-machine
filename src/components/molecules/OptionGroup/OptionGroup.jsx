@@ -6,9 +6,10 @@ import styles from './OptionGroup.module.css'
  * Grupo de opciones excluyentes (radiogroup) con título, subtítulo por opción y una frase que explica
  * la opción elegida. Navegable con flechas. `compact` oculta título, subtítulos y frase (queda accesible).
  * `columns` fija cuántas opciones van por fila (por defecto, todas en una fila).
+ * `labelAction` es un nodo (por ejemplo un botón ⓘ) que va a la derecha del título.
  * `options` = [{ id, label, hint?, description? }].
  */
-export default function OptionGroup({ label, options, value, onChange, compact = false, columns }) {
+export default function OptionGroup({ label, options, value, onChange, compact = false, columns, labelAction }) {
   const labelId = useId()
   const refs = useRef([])
   const selected = options.find((o) => o.id === value)
@@ -25,7 +26,10 @@ export default function OptionGroup({ label, options, value, onChange, compact =
 
   return (
     <div className={styles.root} data-compact={compact || undefined}>
-      <PixelText as="span" size="xs" id={labelId} className={compact ? styles.hidden : undefined}>{label}</PixelText>
+      <div className={compact ? styles.hidden : styles.head}>
+        <PixelText as="span" size="xs" id={labelId}>{label}</PixelText>
+        {labelAction}
+      </div>
       <div
         role="radiogroup"
         aria-labelledby={labelId}

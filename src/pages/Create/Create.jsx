@@ -72,7 +72,7 @@ function Steps() {
   return (
     <div className={styles.stack}>
       <MixResult target={targetColor} paints={chosen} onAddPaint={addPaint} />
-      <PixelButton variant="secondary" onClick={back}>Volver</PixelButton>
+      <PixelButton variant="secondary" size="sm" onClick={back}>Volver</PixelButton>
     </div>
   )
 }

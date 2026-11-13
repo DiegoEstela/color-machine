@@ -60,4 +60,14 @@ describe('OptionGroup', () => {
     render(<Harness />)
     expect(screen.getByRole('radiogroup').style.getPropertyValue('--columns')).toBe('3')
   })
+  it('muestra una acción a la derecha del título', () => {
+    render(<Harness labelAction={<button>info</button>} />)
+    expect(screen.getByRole('button', { name: 'info' })).toBeInTheDocument()
+    expect(screen.getByRole('radiogroup', { name: 'Exactitud' })).toBeInTheDocument()
+  })
+  it('sin descripción en la opción elegida no muestra ninguna frase', () => {
+    render(<OptionGroup label="Receta" options={[{ id: 'a', label: 'A', hint: 'h' }, { id: 'b', label: 'B' }]} value="a" onChange={() => {}} />)
+    expect(screen.queryByRole('status')).not.toBeInTheDocument()
+    expect(document.querySelector('[aria-live]')).toBeNull()
+  })
 })

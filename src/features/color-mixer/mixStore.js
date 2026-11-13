@@ -15,19 +15,30 @@ export const useMixStore = create((set, get) => ({
   targetColor: null,
   targetThumb: null, // miniatura del recorte, solo en memoria
   maxParts: DEFAULT_MAX_PARTS,
-  recipeKey: 'recommended', // 'recommended' | 'best' | 'others'
+  recipeKey: 'recommended', // 'recommended' | 'best'
+  extraPaints: [], // pinturas estándar sumadas a esta mezcla desde el paso 3 (solo en memoria)
   result: null, // { key, status: 'mixing' | 'ready' | 'error', data, suggestions }
   savedRecipes: {}, // firma de receta (objetivo + partes) → id guardado, para no duplicar en la sesión
 
   /** Guarda el color objetivo (hex normalizado). Ignora valores inválidos. */
   setTarget(hex) {
     const color = normalizeHex(hex)
-    if (color) set({ targetColor: color })
+    if (!color) return
+    // otro color objetivo = otra mezcla: las pinturas sumadas a la anterior ya no corresponden
+    set(color === get().targetColor ? {} : { targetColor: color, extraPaints: [] })
   },
 
   setTargetThumb: (thumb) => set({ targetThumb: thumb ?? null }),
 
   setMaxParts: (maxParts) => set({ maxParts }),
+
+  /** Suma una pintura estándar a esta mezcla (por ejemplo "+ Blanco"). Ignora la que ya está sumada. */
+  addExtra(paint) {
+    if (get().extraPaints.some((p) => p.id === paint.id)) return
+    set((s) => ({ extraPaints: [...s.extraPaints, { ...paint, standard: true }] }))
+  },
+
+  removeExtra: (id) => set((s) => ({ extraPaints: s.extraPaints.filter((p) => p.id !== id) })),
 
   /** Recuerda que esta receta ya se guardó (clave = `recipeSignature`). */
   markSaved: (signature, id) => set((s) => ({ savedRecipes: { ...s.savedRecipes, [signature]: id } })),
@@ -36,7 +47,7 @@ export const useMixStore = create((set, get) => ({
   remix(hex) {
     const color = normalizeHex(hex)
     if (!color) return
-    set({ targetColor: color, targetThumb: null, step: 2, result: null, recipeKey: 'recommended' })
+    set({ targetColor: color, targetThumb: null, step: 2, result: null, recipeKey: 'recommended', extraPaints: [] })
   },
 
   selectRecipe: (recipeKey) => set({ recipeKey }),
@@ -72,5 +83,5 @@ export const useMixStore = create((set, get) => ({
 
   back: () => set((s) => ({ step: Math.max(1, s.step - 1) })),
 
-  reset: () => set({ step: 1, targetColor: null, targetThumb: null, maxParts: DEFAULT_MAX_PARTS, recipeKey: 'recommended', result: null, savedRecipes: {} }),
+  reset: () => set({ step: 1, targetColor: null, targetThumb: null, maxParts: DEFAULT_MAX_PARTS, recipeKey: 'recommended', result: null, savedRecipes: {}, extraPaints: [] }),
 }))

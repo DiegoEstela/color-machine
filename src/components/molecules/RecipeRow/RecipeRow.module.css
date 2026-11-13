@@ -1,3 +1,25 @@
-.row { display: flex; align-items: center; gap: var(--space-3); list-style: none; min-height: var(--touch-min); }
-.text { display: flex; flex-direction: column; gap: var(--space-1); min-width: 5.5rem; }
-.bar { flex: 1; min-width: 0; }
+.row {
+  display: grid;
+  grid-template-columns: auto minmax(5rem, auto) 1fr;
+  grid-template-areas: 'jar text bar' '. actions actions';
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
+  list-style: none;
+  min-height: 36px;
+}
+.row > :first-child { grid-area: jar; }
+.text { grid-area: text; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.meta { display: flex; align-items: center; gap: var(--space-2); }
+.bar { grid-area: bar; min-width: 0; }
+.actions { grid-area: actions; display: flex; align-items: center; justify-content: flex-end; gap: var(--space-3); padding-bottom: var(--space-1); }
+
+/* Etiqueta de las pinturas estándar. */
+.tag {
+  font-family: var(--font-pixel);
+  font-size: var(--text-xs);
+  line-height: 1;
+  padding: 2px var(--space-1);
+  color: var(--color-ink);
+  background: var(--color-yellow);
+  border: var(--border-w) solid var(--color-line);
+}

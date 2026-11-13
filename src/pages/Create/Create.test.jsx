@@ -35,7 +35,8 @@ describe('Create', () => {
     expect(screen.getByText('Paso 3 de 3')).toBeInTheDocument()
     expect(await screen.findByRole('img', { name: /^Tu mezcla #/ }, { timeout: 3000 })).toBeInTheDocument()
     expect(screen.getByRole('img', { name: 'Tu color #e63946' })).toBeInTheDocument()
-    expect(screen.getByText(/Total: \d+ partes? en total/)).toBeInTheDocument()
+    expect(screen.getByRole('radiogroup', { name: '¿Qué receta querés ver?' })).toBeInTheDocument()
+    expect(screen.queryByText(/Total:/)).not.toBeInTheDocument()
 
     // Volver dos veces conserva el color objetivo
     fireEvent.click(screen.getByRole('button', { name: 'Volver' }))

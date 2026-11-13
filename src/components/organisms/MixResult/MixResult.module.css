@@ -1,9 +1,32 @@
-.root { display: flex; flex-direction: column; gap: var(--space-4); }
-.recipe { display: flex; flex-direction: column; gap: var(--space-3); }
-.rows { display: flex; flex-direction: column; gap: var(--space-1); margin: 0; padding: 0; }
-.option { display: flex; flex-direction: column; gap: var(--space-2); padding-bottom: var(--space-3); border-bottom: var(--border-w) dashed var(--color-disabled); }
-.info { display: flex; align-items: flex-start; gap: var(--space-2); }
-.info > svg { flex: none; margin-top: 2px; }
+/* Altura de la zona del resultado: frascos + parecido (~84 px) y espacio para 3 filas de pinturas. */
+.root { --zone-h: 208px; display: flex; flex-direction: column; gap: var(--space-2); }
+
+.zone {
+  height: var(--zone-h); /* igual mientras mezcla y cuando muestra la receta: no hay saltos */
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.zone[data-state='error'] { align-items: center; justify-content: center; }
+.zone > :first-child { flex: none; }
+
+/* Las filas llenan lo que queda de la zona; con más de 3 pinturas solo esta lista hace scroll. */
+.rows {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0 var(--space-4) 0 0; /* aire a la derecha para la zona táctil de los botones de cada fila */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.rows[data-has-standard] { padding-bottom: var(--space-3); } /* y abajo, para la última fila con botones */
+
 .advice { display: flex; flex-direction: column; gap: var(--space-2); }
-.list { margin: 0; padding-left: var(--space-4); }
-.suggestion { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.suggestions { display: flex; gap: var(--space-2); }
+.suggestions > button { flex: 1 1 0; min-width: 0; }
+.suggestion { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: left; }
+.hint { font-family: var(--font-body); font-size: var(--text-xs); line-height: 1.1; }

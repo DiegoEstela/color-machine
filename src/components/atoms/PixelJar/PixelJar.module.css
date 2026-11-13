@@ -6,6 +6,7 @@
 .jar { display: block; flex: none; --jar-color: var(--color-surface-alt); }
 .jar[data-size='sm'] { width: 28px; }
 .jar[data-size='md'] { width: 40px; }
+.jar[data-size='mid'] { width: 46px; }
 .jar[data-size='lg'] { width: 72px; }
 .jar[data-pop] { animation: pop var(--dur-pop) steps(5) 1 both; transform-origin: 50% 100%; }
 .k { fill: var(--color-line); }

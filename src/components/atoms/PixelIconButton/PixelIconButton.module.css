@@ -1,0 +1,32 @@
+.button {
+  position: relative;
+  --visual: 28px;
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: var(--visual);
+  height: var(--visual);
+  padding: 0;
+  color: var(--color-ink);
+  background: var(--color-blue);
+  border: var(--border-w) solid var(--color-line);
+  box-shadow: var(--bevel-light), var(--bevel-dark);
+  cursor: pointer;
+}
+.button[data-size='sm'] { --visual: 24px; }
+.button[data-variant='danger'] { background: var(--color-danger); }
+.button[data-variant='primary'] { background: var(--color-pink); }
+.button:active:not(:disabled) { transform: translate(1px, 1px); }
+.button:disabled { color: var(--color-ink-soft); background: var(--color-disabled); border-color: var(--color-ink-soft); box-shadow: none; cursor: not-allowed; }
+
+/* Zona táctil invisible de 44 px (el borde queda fuera de lo que miden los extremos, por eso se resta). */
+.button::after {
+  content: '';
+  position: absolute;
+  inset: calc((var(--touch-min) - var(--visual)) / -2 - var(--border-w) - 1px); /* 1 px de margen por el redondeo de pantalla */
+}
+
+/* Zona táctil hacia arriba: 18 px extra arriba y 2 abajo (en lugar de 10 y 10). */
+.button[data-hit='up']::after {
+  inset: calc(-19px - var(--border-w)) calc((var(--touch-min) - var(--visual)) / -2 - var(--border-w) - 1px) calc(-2px - var(--border-w));
+}

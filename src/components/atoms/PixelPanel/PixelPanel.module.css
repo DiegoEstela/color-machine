@@ -11,6 +11,7 @@
 .panel[data-tone='pink'] { background: var(--color-pink); }
 
 .body[data-padding] { padding: 0; }
+.panel[data-padding='xs'] > .body { padding: var(--space-2); }
 .panel[data-padding='sm'] > .body { padding: var(--space-3); }
 .panel[data-padding='md'] > .body { padding: var(--space-4); }
 .panel[data-padding='lg'] > .body { padding: var(--space-5); }

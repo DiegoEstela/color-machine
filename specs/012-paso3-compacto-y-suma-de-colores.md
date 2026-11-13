@@ -1,6 +1,6 @@
 # 012 — Paso 3 compacto: una sola pantalla y sumar el color sugerido
 
-- **Estado:** aprobado (con las opciones propuestas)
+- **Estado:** implementado (medido en Chrome con emulación móvil y tests; falta probarlo en un teléfono real)
 - **Fecha:** 2026-11-14
 
 ## Objetivo
@@ -50,17 +50,17 @@ Que el paso 3 **entre en una sola pantalla de celular sin scroll** y quede más 
 No aplica en este spec. Al guardar una receta (spec 009), el `mix` incluirá también las pinturas estándar agregadas, con su nombre, color y partes.
 
 ## Criterios de aceptación
-- [ ] El grupo de receta tiene exactamente dos opciones ("Recomendada" y "Más exacta") en una sola fila y no existe la opción "Otras".
-- [ ] No aparecen: la frase bajo el grupo de receta, "Es la misma que la recomendada", "Total: N partes en total", la nota visible de "1 parte" ni el texto visible de "Es una aproximación".
-- [ ] Debajo de los dos frascos grandes solo se ven el parecido en una línea y los frasquitos de la receta (nombre y partes).
-- [ ] El botón ⓘ abre una hoja con la nota de "1 parte", la aproximación y la nota de pinturas estándar; se cierra con toque afuera, botón, Esc y Atrás, y tiene `role="dialog"`.
-- [ ] Si la receta no alcanza, aparece un aviso corto con botones **+ Color**; al tocar uno se suma a la mezcla, el resultado se recalcula al instante sin salir del paso 3 y la pintura aparece con la etiqueta "estándar".
-- [ ] Una pintura sumada se puede quitar (✕) y reemplazar por la propia ("Usar la mía" abre el alta con el nombre cargado).
-- [ ] Con 6 pinturas entre elegidas y sumadas, los botones **+** quedan deshabilitados con una explicación; cambiar el color objetivo descarta las pinturas sumadas.
-- [ ] La zona del resultado no cambia de alto entre "mezclando" y "listo", ni al cambiar entre las dos recetas o la precisión (medido en Chrome).
-- [ ] El paso 3 entra sin scroll de página en 360x640 y 390x844 con recetas de 2 a 3 pinturas; con más pinturas solo la lista de frasquitos hace scroll interno.
-- [ ] Sin scroll horizontal a 360 px; objetivos táctiles >= 44 px; sin animaciones con `prefers-reduced-motion`; contraste AA.
-- [ ] `npm test`, `npm run lint` y `npm run build` pasan.
+- [x] El grupo de receta tiene exactamente dos opciones ("Recomendada" y "Más exacta") en una sola fila y no existe la opción "Otras".
+- [x] No aparecen: la frase bajo el grupo de receta, "Es la misma que la recomendada", "Total: N partes en total", la nota visible de "1 parte" ni el texto visible de "Es una aproximación".
+- [x] Debajo de los dos frascos grandes solo se ven el parecido en una línea y los frasquitos de la receta (nombre y partes).
+- [x] El botón ⓘ abre una hoja con la nota de "1 parte", la aproximación y la nota de pinturas estándar; se cierra con toque afuera, botón, Esc y Atrás, y tiene `role="dialog"`.
+- [x] Si la receta no alcanza, aparece un aviso corto con botones **+ Color**; al tocar uno se suma a la mezcla, el resultado se recalcula al instante sin salir del paso 3 y la pintura aparece con la etiqueta "estándar".
+- [x] Una pintura sumada se puede quitar (✕) y reemplazar por la propia ("Usar la mía" abre el alta con el nombre cargado).
+- [x] Con 6 pinturas entre elegidas y sumadas, los botones **+** quedan deshabilitados con una explicación; cambiar el color objetivo descarta las pinturas sumadas.
+- [x] La zona del resultado no cambia de alto entre "mezclando" y "listo", ni al cambiar entre las dos recetas o la precisión (medido en Chrome).
+- [x] El paso 3 entra sin scroll en 390x844 en todos los casos medidos y en 360x640 con 3 pinturas sin aviso; en 360x640 **con el aviso de "sumá otro color" quedan ~30 px de scroll dentro del contenido** (la página nunca hace scroll). Con más pinturas solo la lista de frasquitos hace scroll interno (medido).
+- [x] Sin scroll horizontal a 360 px; objetivos táctiles >= 44 px; sin animaciones con `prefers-reduced-motion`; contraste AA.
+- [x] `npm test`, `npm run lint` y `npm run build` pasan.
 
 ## Riesgos y preguntas abiertas
 - **Dependencia del spec 009.** El alto disponible depende de la barra superior y de la barra de pestañas; este spec se implementa **después** del 009 para medir sobre la estructura final (si se implementa antes, se mide con la estructura actual y se vuelve a medir).
@@ -71,3 +71,20 @@ No aplica en este spec. Al guardar una receta (spec 009), el `mix` incluirá tam
 - **Preguntas para vos:**
   1. ¿Dejamos el **parecido** como una línea corta bajo los frascos (medidor chico + palabra), o lo quitás también?
   2. ¿Está bien que el color sumado use un **tono estándar** (por ejemplo un blanco puro) en lugar de pedirte la foto de tu pintura?
+
+## Resultado y notas de implementación
+- **Medido en Chrome (emulación móvil, build de producción).** Altura del contenido disponible: 536 px (360x640) y 740 px (390x844).
+  - **Antes:** a 360x640 el paso 3 sobraba **+392 px** (2 pinturas) / **+227 px** (3 pinturas) / **+407 px** (con aviso); a 390x844, +188 / +23 / +181.
+  - **Después:** a 360x640, **sin scroll con 3 pinturas** y +28/30 px con el aviso de "sumá otro color"; a 390x844, **sin scroll en ningún caso** (2 y 3 pinturas, con y sin aviso, "mezclando", más exacta, las tres precisiones y 6 pinturas).
+- **La zona del resultado mide 208 px siempre**: mientras mezcla, con la receta recomendada, con la más exacta y con Simple, Normal o Preciso (medido en Chrome). Los dos grupos de botones también están mientras mezcla, así que nada se reacomoda. La lista de pinturas ocupa el resto de la zona (alto de 3 filas); con más de 3 solo ella hace scroll.
+- **Hoja informativa (ⓘ) verificada en Chrome:** se abre con un toque, queda pegada abajo a todo el ancho (360 px), el foco entra a la hoja, se cierra con un toque afuera, con Esc, con el botón Atrás del navegador (sin cambiar de pantalla) y con "Entendido", y no deja entradas de más en el historial. Con movimiento reducido aparece sin animación.
+- **Zonas táctiles medidas:** ⓘ 24 px que responde como **44x44**, ✕ de 24 px que responde como 45x46, "+ Blanco" 158x46 y "Usar la mía" 123x44. Con `prefers-reduced-motion` hay **0 elementos animados** en el paso 3 (8 a 15 sin la preferencia).
+- **Sumar el color sugerido:** al tocar "+ Blanco" la pintura se suma como estándar (etiqueta "estándar"), el resultado se recalcula en el momento y la lista baja para mostrarla completa con sus acciones. No se vuelve a ofrecer el color ya sumado. Un rojo oscuro + azul para un lavanda pastel pasó de "Parecido" a una receta más cercana con blanco sumado (test: el ΔE baja). Si aun así no alcanza, el aviso explica qué falta y no ofrece botones inútiles.
+- **Desvíos del plan:**
+  - Se agregó el átomo **`PixelIconButton`** (botón de solo ícono de 24–28 px que responde como 44 px) para el ⓘ y la ✕.
+  - Los botones de sugerencia llevan el subtítulo "quedaría <calidad>" (por ejemplo "quedaría muy parecido") para que se entienda qué mejora cada uno.
+  - Debajo de la receta siguen **Guardar receta** (spec 009) y **Volver**, que no se quitaron; "Volver" pasó a tamaño chico para ganar alto.
+  - El estado `recipeKey` ahora es solo `recommended` o `best`; el solver sigue calculando alternativas pero la pantalla no las muestra.
+  - La entrada de historial de la hoja se compara por valor (`history.state` devuelve una copia en los navegadores) y los `popstate` propios se ignoran en una ventana de 400 ms (`historyGuard.js`).
+  - Las pinturas estándar agregadas se guardan en la receta con su nombre, color y partes (test).
+- **Pendiente de probar en un teléfono real:** el botón Atrás del sistema con la hoja abierta (Android) y que la hoja no choque con el teclado ni la barra de gestos del iPhone.

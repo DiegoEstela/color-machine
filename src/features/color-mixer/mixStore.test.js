@@ -121,3 +121,54 @@ describe('mixStore: recetas guardadas y "mezclar otra vez"', () => {
     expect(s()).toMatchObject({ step: 3, targetColor: '#111111' })
   })
 })
+
+describe('mixStore: pinturas sumadas a la mezcla', () => {
+  const blanco = { id: 'base-blanco', name: 'Blanco', hex: '#ffffff' }
+  const negro = { id: 'base-negro', name: 'Negro', hex: '#141414' }
+
+  it('addExtra suma una pintura marcada como estándar y no la repite', () => {
+    s().addExtra(blanco)
+    s().addExtra(blanco)
+    expect(s().extraPaints).toEqual([{ ...blanco, standard: true }])
+    s().addExtra(negro)
+    expect(s().extraPaints.map((p) => p.id)).toEqual(['base-blanco', 'base-negro'])
+  })
+
+  it('removeExtra quita solo esa pintura', () => {
+    s().addExtra(blanco)
+    s().addExtra(negro)
+    s().removeExtra('base-blanco')
+    expect(s().extraPaints.map((p) => p.id)).toEqual(['base-negro'])
+  })
+
+  it('cambiar el color objetivo descarta las pinturas sumadas; repetir el mismo color no', () => {
+    s().setTarget('#5b2a86')
+    s().addExtra(blanco)
+    s().setTarget('#5B2A86')
+    expect(s().extraPaints).toHaveLength(1)
+    s().setTarget('#2a9d8f')
+    expect(s().extraPaints).toEqual([])
+  })
+
+  it('"mezclar otra vez" y reset también las descartan', () => {
+    s().addExtra(blanco)
+    s().remix('#5b2a86')
+    expect(s().extraPaints).toEqual([])
+    s().addExtra(blanco)
+    s().reset()
+    expect(s().extraPaints).toEqual([])
+  })
+
+  it('las pinturas sumadas cuentan en la clave: sumar una invalida el resultado anterior', () => {
+    const base = [{ id: 'r', hex: '#e4002b' }, { id: 'a', hex: '#1d3fbb' }]
+    expect(resultKey('#5b2a86', base, 10)).not.toBe(resultKey('#5b2a86', [...base, { id: 'base-blanco', hex: '#ffffff' }], 10))
+  })
+
+  it('la receta mostrada es solo "recomendada" o "más exacta"', () => {
+    s().selectRecipe('best')
+    expect(s().recipeKey).toBe('best')
+    s().reset()
+    expect(s().recipeKey).toBe('recommended')
+  })
+})
+

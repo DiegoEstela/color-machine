@@ -5,3 +5,7 @@
 .meter[data-level='4'] { --meter-color: var(--color-mint); }
 .segment { flex: 1; height: var(--space-4); background: var(--color-disabled); }
 .segment[data-filled] { background: var(--meter-color); box-shadow: var(--bevel-light), var(--bevel-dark); }
+
+.meter[data-size='sm'] { gap: 2px; padding: 2px; border-width: 2px; }
+.meter[data-size='sm'] .segment { height: 8px; }
+.meter[data-size='sm'] .segment[data-filled] { box-shadow: none; }

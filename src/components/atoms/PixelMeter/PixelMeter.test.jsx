@@ -16,4 +16,8 @@ describe('PixelMeter', () => {
     rerender(<PixelMeter level={-2} label="x" />)
     expect(screen.getByRole('meter')).toHaveAttribute('aria-valuenow', '0')
   })
+  it('admite tamaño chico', () => {
+    render(<PixelMeter level={2} label="x" size="sm" />)
+    expect(screen.getByRole('meter')).toHaveAttribute('data-size', 'sm')
+  })
 })
