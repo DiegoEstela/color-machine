@@ -1,0 +1,6 @@
+.root { display: flex; flex-direction: column; gap: var(--space-2); }
+.options { display: grid; grid-template-columns: repeat(var(--columns), minmax(0, 1fr)); gap: var(--space-2); }
+.options > button { min-width: 0; padding-inline: var(--space-1); }
+.option { display: flex; flex-direction: column; align-items: center; gap: var(--space-1); }
+.hint { font-family: var(--font-body); font-size: var(--text-xs); line-height: 1.2; }
+.hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }

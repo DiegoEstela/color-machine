@@ -1,3 +1,4 @@
+import PixelIcon from '../PixelIcon/PixelIcon.jsx'
 import styles from './PixelButton.module.css'
 
 export default function PixelButton({
@@ -5,6 +6,7 @@ export default function PixelButton({
   size = 'md',
   type = 'button',
   disabled = false,
+  icon,
   children,
   ...rest
 }) {
@@ -17,6 +19,7 @@ export default function PixelButton({
       className={styles.button}
       {...rest}
     >
+      {icon && <PixelIcon name={icon} size={16} />}
       {children}
     </button>
   )

@@ -1,4 +1,4 @@
-import { PixelText } from '../../atoms/index.js'
+import { PixelSparkle, PixelText } from '../../atoms/index.js'
 import styles from './MixingAnimation.module.css'
 
 const BUBBLES = 6
@@ -16,6 +16,8 @@ export default function MixingAnimation({ colors = [] }) {
             <span key={i} className={styles.layer} style={{ '--layer-color': c }} />
           ))}
         </div>
+        <PixelSparkle size={14} tone="pink" className={styles.s1} />
+        <PixelSparkle size={12} tone="blue" className={styles.s2} delay={500} />
         {Array.from({ length: BUBBLES }, (_, i) => (
           <span key={i} className={styles.bubble} style={{ '--i': i }} />
         ))}

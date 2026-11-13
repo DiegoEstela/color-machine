@@ -32,3 +32,6 @@
   animation: rise 900ms steps(6) infinite;
   animation-delay: calc(var(--i) * 150ms);
 }
+
+.s1 { position: absolute; top: calc(var(--space-5) * -1); right: calc(var(--space-4) * -1); }
+.s2 { position: absolute; top: calc(var(--space-6) * -1); left: calc(var(--space-3) * -1); }

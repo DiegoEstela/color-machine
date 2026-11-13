@@ -21,6 +21,11 @@
   --color-disabled: #e6e2ec;
   --color-danger-ink: #8f1d2c;
   --color-scrim: rgb(59 54 80 / 0.5);
+  --color-sky: #cfe8ff;
+  --color-peach: #ffdcc2;
+  --color-dither: rgb(205 180 219 / 0.22); /* puntos del fondo */
+  --color-dither-ink: rgb(59 54 80 / 0.1); /* puntos de las barras de título */
+  --gloss: rgb(255 255 255 / 0.55);
 
   /* Tipografía */
   --font-pixel: 'Press Start 2P', ui-monospace, monospace;
@@ -49,6 +54,8 @@
   --shadow-step: 4px;
   --shadow-pixel: var(--shadow-step) var(--shadow-step) 0 var(--color-line);
   --shadow-pixel-pressed: 0 0 0 var(--color-line);
+  --bevel-light: inset 0 3px 0 rgb(255 255 255 / 0.65);
+  --bevel-dark: inset 0 -3px 0 rgb(59 54 80 / 0.16);
 
   /* Tamaños táctiles */
   --touch-min: 44px;
@@ -59,4 +66,7 @@
   --z-modal: 100;
   --dur-fast: 80ms;
   --dur-base: 160ms;
+  --dur-pop: 360ms;
+  --dur-enter: 200ms;
+  --dur-twinkle: 1200ms;
 }

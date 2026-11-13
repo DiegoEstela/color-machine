@@ -1,0 +1,15 @@
+@keyframes pop {
+  0% { transform: scale(0.5); opacity: 0; }
+  60% { transform: scale(1.12); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.jar { display: block; flex: none; --jar-color: var(--color-surface-alt); }
+.jar[data-size='sm'] { width: 32px; }
+.jar[data-size='md'] { width: 48px; }
+.jar[data-size='lg'] { width: 84px; }
+.jar[data-pop] { animation: pop var(--dur-pop) steps(5) 1 both; transform-origin: 50% 100%; }
+.k { fill: var(--color-line); }
+.l { fill: var(--color-lavender); }
+.c { fill: var(--jar-color); }
+.w { fill: var(--gloss); }
+.s { fill: rgb(59 54 80 / 0.28); }

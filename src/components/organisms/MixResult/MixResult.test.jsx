@@ -27,27 +27,59 @@ describe('MixResult', () => {
   it('una mezcla que sí alcanza no muestra avisos de pinturas insuficientes', async () => {
     render(<MixResult target={target} paints={paints} onAddPaint={() => {}} />)
     await ready()
-    expect(screen.queryByRole('note')).not.toBeInTheDocument()
+    expect(screen.queryByRole('note', { name: 'Con estas pinturas no se llega del todo' })).not.toBeInTheDocument()
   })
 
   it('cambia entre Recomendada y Más exacta', async () => {
     render(<MixResult target={target} paints={paints} onAddPaint={() => {}} />)
     await ready()
-    expect(screen.getByRole('button', { name: 'Recomendada' })).toHaveAttribute('aria-pressed', 'true')
-    fireEvent.click(screen.getByRole('button', { name: 'Más exacta' }))
-    expect(screen.getByRole('button', { name: 'Más exacta' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('radio', { name: /Recomendada/ })).toHaveAttribute('aria-checked', 'true')
+    fireEvent.click(screen.getByRole('radio', { name: /Más exacta/ }))
+    expect(screen.getByRole('radio', { name: /Más exacta/ })).toHaveAttribute('aria-checked', 'true')
     expect(screen.getByText('Es la misma que la recomendada.')).toBeInTheDocument()
+  })
+
+  it('cada grupo de botones tiene un título que explica qué elige', async () => {
+    render(<MixResult target={target} paints={paints} onAddPaint={() => {}} />)
+    await ready()
+    expect(screen.getByRole('radiogroup', { name: '¿Qué tan exacta querés la receta?' })).toBeInTheDocument()
+    expect(screen.getByRole('radiogroup', { name: '¿Qué receta querés ver?' })).toBeInTheDocument()
+  })
+
+  it('las opciones de precisión muestran su subtítulo y la frase de la elegida', async () => {
+    render(<MixResult target={target} paints={paints} onAddPaint={() => {}} />)
+    await ready()
+    expect(screen.getByRole('radio', { name: /Simple.*hasta 6 partes/ })).toBeInTheDocument()
+    expect(screen.getByRole('radio', { name: /Preciso.*hasta 16 partes/ })).toBeInTheDocument()
+    expect(screen.getByText('Equilibrio entre facilidad de medir y parecido con tu color.')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('radio', { name: /Preciso/ }))
+    expect(screen.getByText('El color más parecido posible, pero con más partes para medir.')).toBeInTheDocument()
+  })
+
+  it('las opciones de receta explican qué es cada una', async () => {
+    render(<MixResult target={target} paints={paints} onAddPaint={() => {}} />)
+    await ready()
+    expect(screen.getByText('La más simple que queda casi igual de cerca que la mejor.')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('radio', { name: /Más exacta/ }))
+    expect(screen.getByText('La que más se acerca a tu color, aunque lleve más partes.')).toBeInTheDocument()
+  })
+
+  it('explica qué es una parte y no muestra el ΔE a la vista', async () => {
+    render(<MixResult target={target} paints={paints} onAddPaint={() => {}} />)
+    await ready()
+    expect(screen.getByRole('note', { name: 'Qué es una parte' })).toHaveTextContent('1 parte = la medida que quieras')
+    expect(screen.getByText(/ΔE/).className).toMatch(/hidden/)
   })
 
   it('cambiar la precisión recalcula', async () => {
     render(<MixResult target={target} paints={paints} onAddPaint={() => {}} />)
     await ready()
-    expect(screen.getByRole('button', { name: 'Normal' })).toHaveAttribute('aria-pressed', 'true')
-    fireEvent.click(screen.getByRole('button', { name: 'Simple' }))
+    expect(screen.getByRole('radio', { name: /Normal/ })).toHaveAttribute('aria-checked', 'true')
+    fireEvent.click(screen.getByRole('radio', { name: /Simple/ }))
     expect(useMixStore.getState().maxParts).toBe(6)
     expect(screen.getByRole('status')).toHaveTextContent('Mezclando...')
     await ready()
-    expect(screen.getByRole('button', { name: 'Simple' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('radio', { name: /Simple/ })).toHaveAttribute('aria-checked', 'true')
   })
 
   it('si las pinturas no alcanzan avisa y ofrece sumar blanco', async () => {
@@ -55,7 +87,7 @@ describe('MixResult', () => {
     const onAddPaint = vi.fn()
     render(<MixResult target={pastel} paints={paints} onAddPaint={onAddPaint} />)
     await ready()
-    const note = screen.getByRole('note')
+    const note = screen.getByRole('note', { name: 'Con estas pinturas no se llega del todo' })
     expect(note).toHaveTextContent('probá sumar blanco')
     const add = await screen.findByRole('button', { name: 'Agregar Blanco' }, { timeout: 3000 })
     fireEvent.click(add)

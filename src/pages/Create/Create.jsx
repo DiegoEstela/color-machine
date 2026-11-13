@@ -1,4 +1,4 @@
-import { PixelButton, PixelText, ColorSwatch } from '../../components/atoms/index.js'
+import { PixelButton, PixelJar, PixelText } from '../../components/atoms/index.js'
 import { MixResult, PaintsStep, TargetColorPicker } from '../../components/organisms/index.js'
 import { WizardLayout } from '../../components/templates/index.js'
 import { authService } from '../../features/auth/index.js'
@@ -10,7 +10,7 @@ function TargetReference({ color, thumb }) {
   return (
     <div className={styles.reference}>
       {thumb && <img src={thumb} alt="Recorte de tu color" className={styles.thumb} />}
-      <ColorSwatch color={color} size="md" label="Color objetivo" />
+      <PixelJar color={color} size="sm" label="Color objetivo" />
       <PixelText size="xs" tone="soft">Tu color objetivo</PixelText>
     </div>
   )
@@ -19,6 +19,12 @@ function TargetReference({ color, thumb }) {
 const signOut = () => authService.signOut()
 
 export default function Create() {
+  const step = useMixStore((s) => s.step)
+  // `key` reinicia la animación de entrada en cada paso
+  return <div key={step} className={styles.enter}><Steps /></div>
+}
+
+function Steps() {
   const step = useMixStore((s) => s.step)
   const targetColor = useMixStore((s) => s.targetColor)
   const targetThumb = useMixStore((s) => s.targetThumb)

@@ -1,21 +1,22 @@
 import { useState } from 'react'
 import { PixelButton, PixelText } from '../../atoms/index.js'
 import { AuthField } from '../../molecules/index.js'
+import { AUTH_TITLES } from '../../../features/auth/titles.js'
 import { validateForm } from '../../../features/auth/validation.js'
 import styles from './AuthForm.module.css'
 
-const COPY = {
-  login: { title: 'Entrar', submit: 'Entrar' },
-  signup: { title: 'Crear cuenta', submit: 'Registrarme' },
-  forgot: { title: 'Recuperar contraseña', submit: 'Enviar correo' },
-  reset: { title: 'Nueva contraseña', submit: 'Guardar contraseña' },
+const SUBMIT = {
+  login: 'Entrar',
+  signup: 'Registrarme',
+  forgot: 'Enviar correo',
+  reset: 'Guardar contraseña',
 }
 
 /**
  * Formulario de acceso. `mode` y `onModeChange` son controlados por el padre.
  * `onSubmit(mode, values)` debe devolver `{ error?: string, notice?: string }`.
  */
-export default function AuthForm({ mode, onModeChange, onSubmit }) {
+export default function AuthForm({ mode, onModeChange, onSubmit, hideTitle = false }) {
   const [values, setValues] = useState({ email: '', password: '', confirm: '' })
   const [errors, setErrors] = useState({})
   const [feedback, setFeedback] = useState({})
@@ -47,7 +48,7 @@ export default function AuthForm({ mode, onModeChange, onSubmit }) {
 
   return (
     <form className={styles.form} onSubmit={handleSubmit} noValidate>
-      <PixelText as="h2" size="md">{COPY[mode].title}</PixelText>
+      <PixelText as="h2" size="md" className={hideTitle ? styles.hidden : undefined}>{AUTH_TITLES[mode]}</PixelText>
 
       {showEmail && (
         <AuthField
@@ -85,7 +86,7 @@ export default function AuthForm({ mode, onModeChange, onSubmit }) {
       {feedback.notice && <PixelText variant="body" role="status">{feedback.notice}</PixelText>}
 
       <PixelButton type="submit" size="lg" disabled={busy}>
-        {busy ? 'Un momento...' : COPY[mode].submit}
+        {busy ? 'Un momento...' : SUBMIT[mode]}
       </PixelButton>
 
       {mode === 'login' && (

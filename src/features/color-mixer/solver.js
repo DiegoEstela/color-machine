@@ -45,6 +45,14 @@ export function describeQuality(dE) {
   return 'Aproximado'
 }
 
+/** Nivel del medidor de parecido: 4 = casi idéntico ... 1 = aproximado. */
+export function qualityLevel(dE) {
+  if (dE < 2) return 4
+  if (dE < 5) return 3
+  if (dE < 10) return 2
+  return 1
+}
+
 const buildRecipe = (paints, amounts, target) => {
   const parts = paints
     .map((p, i) => ({ paintId: p.id, name: p.name, hex: p.hex, parts: amounts[i] }))

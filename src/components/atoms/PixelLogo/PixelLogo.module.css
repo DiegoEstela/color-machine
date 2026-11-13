@@ -1,0 +1,7 @@
+.logo { display: block; flex: none; }
+.k { fill: var(--color-line); }
+.p { fill: var(--color-pink); }
+.w { fill: var(--color-surface); }
+.b { fill: var(--color-blue); }
+.y { fill: var(--color-yellow); }
+.m { fill: var(--color-mint); }

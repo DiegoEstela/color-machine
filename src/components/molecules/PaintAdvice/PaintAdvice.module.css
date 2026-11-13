@@ -1,4 +1,4 @@
-.root { display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-3); background: var(--color-yellow); border: var(--border-w) solid var(--color-line); }
+.root { display: flex; flex-direction: column; gap: var(--space-2); }
 .list { display: flex; flex-direction: column; gap: var(--space-2); margin: 0; padding: 0; }
 .item { display: flex; align-items: center; gap: var(--space-2); list-style: none; min-height: var(--touch-min); }
 .item > :nth-child(3) { margin-left: auto; text-align: right; }

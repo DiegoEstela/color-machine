@@ -1,3 +1,9 @@
+@keyframes bounce {
+  0% { transform: translateY(0); }
+  40% { transform: translateY(-4px); }
+  100% { transform: translateY(0); }
+}
+
 .button {
   display: inline-flex;
   align-items: center;
@@ -12,7 +18,7 @@
   font-size: var(--text-sm);
   line-height: var(--leading-pixel);
   cursor: pointer;
-  box-shadow: var(--shadow-pixel);
+  box-shadow: var(--bevel-light), var(--bevel-dark), var(--shadow-pixel);
   transition: transform var(--dur-fast), box-shadow var(--dur-fast), background var(--dur-base);
 }
 .button[data-variant='secondary'] { background: var(--color-blue); }
@@ -25,7 +31,7 @@
 }
 .button:active:not(:disabled) {
   transform: translate(var(--shadow-step), var(--shadow-step));
-  box-shadow: var(--shadow-pixel-pressed);
+  box-shadow: var(--bevel-dark), var(--shadow-pixel-pressed);
 }
 .button:disabled {
   background: var(--color-disabled);
@@ -34,3 +40,7 @@
   box-shadow: none;
   cursor: not-allowed;
 }
+
+/* Al quedar elegido un botón de opción, rebota una vez. */
+.button[aria-pressed='true'],
+.button[aria-checked='true'] { animation: bounce var(--dur-pop) steps(4) 1; }

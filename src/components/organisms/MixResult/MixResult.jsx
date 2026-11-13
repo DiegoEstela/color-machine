@@ -1,15 +1,30 @@
 import { useEffect } from 'react'
-import { PixelButton, PixelPanel, PixelText } from '../../atoms/index.js'
-import { ColorCompare, MixingAnimation, RecipeRow } from '../../molecules/index.js'
+import { PixelButton, PixelIcon, PixelPanel, PixelText } from '../../atoms/index.js'
+import { ColorCompare, MixingAnimation, OptionGroup, RecipeRow } from '../../molecules/index.js'
 import { diagnose } from '../../../features/color-mixer/advisor.js'
 import { resultKey, useMixStore } from '../../../features/color-mixer/mixStore.js'
 import { describeQuality, PRECISION } from '../../../features/color-mixer/solver.js'
 import styles from './MixResult.module.css'
 
 const PRECISIONS = [
-  { id: 'simple', label: 'Simple', parts: PRECISION.simple },
-  { id: 'normal', label: 'Normal', parts: PRECISION.normal },
-  { id: 'preciso', label: 'Preciso', parts: PRECISION.preciso },
+  {
+    id: 'simple', label: 'Simple', hint: 'hasta 6 partes', parts: PRECISION.simple,
+    description: 'Recetas cortas y fáciles de medir, aunque el color puede variar un poco.',
+  },
+  {
+    id: 'normal', label: 'Normal', hint: 'hasta 10 partes', parts: PRECISION.normal,
+    description: 'Equilibrio entre facilidad de medir y parecido con tu color.',
+  },
+  {
+    id: 'preciso', label: 'Preciso', hint: 'hasta 16 partes', parts: PRECISION.preciso,
+    description: 'El color más parecido posible, pero con más partes para medir.',
+  },
+]
+
+const RECIPE_OPTIONS = [
+  { id: 'recommended', label: 'Recomendada', hint: 'la más simple', description: 'La más simple que queda casi igual de cerca que la mejor.' },
+  { id: 'best', label: 'Más exacta', hint: 'la que más se parece', description: 'La que más se acerca a tu color, aunque lleve más partes.' },
+  { id: 'others', label: 'Otras', hint: 'variantes', description: 'Recetas distintas con un parecido similar, por si te falta alguna pintura.' },
 ]
 
 const sameRecipe = (a, b) =>
@@ -45,20 +60,15 @@ export default function MixResult({ target, paints, onAddPaint }) {
   const current = result?.key === key ? result : null // un resultado de otros datos no se muestra
   const retry = () => { useMixStore.setState({ result: null }); calculate({ target, paints }) }
 
+  const precisionId = (PRECISIONS.find((p) => p.parts === maxParts) ?? PRECISIONS[1]).id
   const precision = (
-    <div className={styles.row} role="group" aria-label="Precisión del cálculo">
-      {PRECISIONS.map(({ id, label, parts }) => (
-        <PixelButton
-          key={id}
-          size="sm"
-          variant={maxParts === parts ? 'primary' : 'secondary'}
-          aria-pressed={maxParts === parts}
-          onClick={() => setMaxParts(parts)}
-        >
-          {label}
-        </PixelButton>
-      ))}
-    </div>
+    <OptionGroup
+      label="¿Qué tan exacta querés la receta?"
+      options={PRECISIONS}
+      columns={3}
+      value={precisionId}
+      onChange={(id) => setMaxParts(PRECISIONS.find((p) => p.id === id).parts)}
+    />
   )
 
   if (!current || current.status === 'mixing') {
@@ -81,12 +91,8 @@ export default function MixResult({ target, paints, onAddPaint }) {
   }
 
   const { recommended, best, alternatives } = current.data
-  const tabs = [
-    { id: 'recommended', label: 'Recomendada' },
-    { id: 'best', label: 'Más exacta' },
-    ...(alternatives.length > 0 ? [{ id: 'others', label: 'Otras' }] : []),
-  ]
-  const active = tabs.some((t) => t.id === recipeKey) ? recipeKey : 'recommended'
+  const options = alternatives.length > 0 ? RECIPE_OPTIONS : RECIPE_OPTIONS.filter((o) => o.id !== 'others')
+  const active = options.some((o) => o.id === recipeKey) ? recipeKey : 'recommended'
   const shown = active === 'best' ? best : recommended
   const problems = diagnose(target, shown)
   const suggestions = current.suggestions.slice(0, 2)
@@ -94,19 +100,7 @@ export default function MixResult({ target, paints, onAddPaint }) {
   return (
     <div className={styles.root}>
       {precision}
-      <div className={styles.row} role="group" aria-label="Qué receta ver">
-        {tabs.map(({ id, label }) => (
-          <PixelButton
-            key={id}
-            size="sm"
-            variant={active === id ? 'primary' : 'secondary'}
-            aria-pressed={active === id}
-            onClick={() => selectRecipe(id)}
-          >
-            {label}
-          </PixelButton>
-        ))}
-      </div>
+      <OptionGroup label="¿Qué receta querés ver?" options={options} columns={2} value={active} onChange={selectRecipe} />
 
       {active === 'others' ? (
         alternatives.map((alt, i) => (
@@ -124,10 +118,18 @@ export default function MixResult({ target, paints, onAddPaint }) {
         </>
       )}
 
+      <PixelPanel tone="sky" padding="sm" role="note" aria-label="Qué es una parte">
+        <div className={styles.info}>
+          <PixelIcon name="info" size={20} />
+          <PixelText variant="body" size="sm">
+            1 parte = la medida que quieras (una cucharada, una tapita). Usá la misma para todas las pinturas.
+          </PixelText>
+        </div>
+      </PixelPanel>
+
       {problems.length > 0 && (
-        <PixelPanel tone="yellow" padding="sm" role="note" aria-label="Con estas pinturas no se llega del todo">
+        <PixelPanel tone="yellow" padding="sm" role="note" aria-label="Con estas pinturas no se llega del todo" title="Con estas pinturas no se llega del todo">
           <div className={styles.advice}>
-            <PixelText size="xs">Con estas pinturas no se llega del todo</PixelText>
             <ul className={styles.list}>
               {problems.map((d) => <li key={d.code}><PixelText variant="body" size="sm">{d.message}</PixelText></li>)}
             </ul>
@@ -136,7 +138,7 @@ export default function MixResult({ target, paints, onAddPaint }) {
                 <PixelText variant="body" size="sm">
                   Con {s.role.name} quedaría {describeQuality(s.deltaE).toLowerCase()}.
                 </PixelText>
-                <PixelButton size="sm" variant="secondary" onClick={() => onAddPaint(s.role)}>
+                <PixelButton size="sm" variant="secondary" icon="jar" onClick={() => onAddPaint(s.role)}>
                   Agregar {s.role.name}
                 </PixelButton>
               </div>

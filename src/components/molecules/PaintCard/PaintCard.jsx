@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ColorSwatch, PixelButton, PixelText } from '../../atoms/index.js'
+import { PixelButton, PixelJar, PixelText } from '../../atoms/index.js'
 import styles from './PaintCard.module.css'
 
 /** Una pintura: tocarla la selecciona; Editar y Borrar (con confirmación) a un costado. */
@@ -17,7 +17,7 @@ export default function PaintCard({ paint, thumb, selected, onToggle, onEdit, on
       >
         {thumb
           ? <img src={thumb} alt="" className={styles.thumb} />
-          : <ColorSwatch color={paint.hex} size="md" />}
+          : <PixelJar color={paint.hex} size="md" />}
         <span className={styles.text}>
           <PixelText as="span" size="sm">{paint.name}</PixelText>
           <PixelText as="span" size="xs" tone="soft">{paint.hex}</PixelText>

@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { PixelPanel, PixelText } from '../../components/atoms/index.js'
+import { PixelLogo, PixelPanel, PixelSparkle, PixelText } from '../../components/atoms/index.js'
 import { AuthForm } from '../../components/organisms/index.js'
 import { authService, useAuthStore } from '../../features/auth/index.js'
+import { AUTH_TITLES } from '../../features/auth/titles.js'
 import styles from './Auth.module.css'
 
 export default function Auth() {
@@ -36,9 +37,17 @@ export default function Auth() {
 
   return (
     <main className={styles.page}>
-      <PixelText as="h1" size="lg">Color Machine</PixelText>
-      <PixelPanel padding="lg">
-        <AuthForm key={activeMode} mode={activeMode} onModeChange={setMode} onSubmit={onSubmit} />
+      <header className={styles.brand}>
+        <div className={styles.logo}>
+          <PixelSparkle size={16} tone="pink" className={styles.s1} />
+          <PixelLogo size={56} />
+          <PixelSparkle size={12} tone="blue" className={styles.s2} delay={600} />
+        </div>
+        <PixelText as="h1" size="lg">Color Machine</PixelText>
+        <PixelText variant="body" tone="soft">Creá la mezcla justa para cualquier color.</PixelText>
+      </header>
+      <PixelPanel padding="md" title={AUTH_TITLES[activeMode]}>
+        <AuthForm key={activeMode} mode={activeMode} onModeChange={setMode} onSubmit={onSubmit} hideTitle />
       </PixelPanel>
     </main>
   )

@@ -2,12 +2,20 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import { WizardLayout } from '../index.js'
 
 describe('WizardLayout', () => {
-  it('muestra el paso, el título y el contenido', () => {
+  it('muestra el título, el contenido y el paso actual', () => {
     render(<WizardLayout step={1} total={3} title="Elegí tu color"><p>contenido</p></WizardLayout>)
-    expect(screen.getByText('Paso 1 de 3')).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Elegí tu color' })).toBeInTheDocument()
-    expect(screen.getByRole('progressbar', { name: 'Paso 1 de 3' })).toHaveAttribute('aria-valuenow', '1')
+    expect(screen.getByText('Paso 1 de 3')).toBeInTheDocument()
+    expect(screen.getByRole('list', { name: 'Paso 1 de 3' })).toBeInTheDocument()
     expect(screen.getByText('contenido')).toBeInTheDocument()
+  })
+
+  it('la barra de título lleva el logo y el título; el indicador de pasos va dentro de la ventana', () => {
+    const { container } = render(<WizardLayout step={2} total={3} title="Tus pinturas">x</WizardLayout>)
+    const titlebar = screen.getByRole('heading', { name: 'Tus pinturas' }).closest('[class*="titlebar"]')
+    expect(titlebar.querySelector('svg')).not.toBeNull() // logo
+    expect(container.querySelector('ol')).not.toBeNull()
+    expect(screen.getByRole('listitem', { current: 'step' })).toHaveTextContent('Pinturas')
   })
 
   it('muestra un botón de ícono para cerrar sesión solo si hay onSignOut', () => {
@@ -19,11 +27,5 @@ describe('WizardLayout', () => {
     expect(onSignOut).toHaveBeenCalledTimes(1)
     rerender(<WizardLayout step={1} total={3} title="Paso">x</WizardLayout>)
     expect(screen.queryByRole('button', { name: 'Cerrar sesión' })).not.toBeInTheDocument()
-  })
-
-  it('el título comparte cabecera con el indicador compacto', () => {
-    render(<WizardLayout step={2} total={3} title="Tus pinturas">x</WizardLayout>)
-    expect(screen.getByText('2/3')).toBeInTheDocument()
-    expect(screen.getByRole('progressbar', { name: 'Paso 2 de 3' })).toHaveAttribute('data-size', 'sm')
   })
 })

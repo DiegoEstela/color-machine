@@ -6,6 +6,7 @@ export default function PixelText({
   size = 'md',
   tone = 'default',
   variant = 'pixel',
+  className,
   children,
   ...rest
 }) {
@@ -14,7 +15,7 @@ export default function PixelText({
       data-size={size}
       data-tone={tone}
       data-variant={variant}
-      className={styles.text}
+      className={className ? `${styles.text} ${className}` : styles.text}
       {...rest}
     >
       {children}

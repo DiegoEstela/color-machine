@@ -2,3 +2,9 @@
 .row { display: flex; flex-wrap: wrap; gap: var(--space-3); }
 .reference { display: flex; align-items: center; gap: var(--space-3); }
 .thumb { width: var(--touch-min); height: var(--touch-min); object-fit: cover; border: var(--border-w) solid var(--color-line); image-rendering: pixelated; }
+
+@keyframes enter {
+  from { opacity: 0; transform: translateY(var(--space-2)); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.enter { animation: enter var(--dur-enter) steps(4) 1 both; }

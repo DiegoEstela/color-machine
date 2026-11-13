@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react'
 import { PixelButton, PixelInput, PixelText } from '../../atoms/index.js'
-import { ColorPreview, ColorWheel, PhotoColorPicker, PhotoCropper, PhotoPicker } from '../../molecules/index.js'
+import { ColorPreview, ColorWheel, OptionGroup, PhotoColorPicker, PhotoCropper, PhotoPicker } from '../../molecules/index.js'
 import { normalizeHex } from '../../../lib/color.js'
 import styles from './TargetColorPicker.module.css'
 
@@ -80,19 +80,13 @@ export default function TargetColorPicker({ value, thumbnail = null, onChange, o
       {tab === 'photo' && (
         <div className={styles.photo}>
           <PhotoPicker onFile={handleFile} />
-          <div className={styles.tabs} role="group" aria-label="Cómo tomar el color de la foto">
-            {PHOTO_MODES.map(({ id, label }) => (
-              <PixelButton
-                key={id}
-                size="sm"
-                variant={photoMode === id ? 'primary' : 'secondary'}
-                aria-pressed={photoMode === id}
-                onClick={() => setPhotoMode(id)}
-              >
-                {label}
-              </PixelButton>
-            ))}
-          </div>
+          <OptionGroup
+            compact
+            label="Cómo tomar el color de la foto"
+            options={PHOTO_MODES}
+            value={photoMode}
+            onChange={setPhotoMode}
+          />
           <PixelText variant="body" size="sm" tone="soft">
             {photoMode === 'crop' ? 'Encuadrá la zona del color.' : 'Tocá un punto de la foto.'} Mejor con luz natural.
           </PixelText>

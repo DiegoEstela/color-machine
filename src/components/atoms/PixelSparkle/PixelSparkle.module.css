@@ -1,0 +1,11 @@
+@keyframes twinkle {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(0.6); opacity: 0.5; }
+}
+.sparkle { display: block; flex: none; --sparkle-fill: var(--color-yellow); animation: twinkle var(--dur-twinkle) steps(3) infinite; animation-delay: var(--sparkle-delay); }
+.sparkle[data-still] { animation: none; }
+.sparkle[data-tone='pink'] { --sparkle-fill: var(--color-pink); }
+.sparkle[data-tone='blue'] { --sparkle-fill: var(--color-blue); }
+.sparkle[data-tone='mint'] { --sparkle-fill: var(--color-mint); }
+.k { fill: var(--color-line); }
+.f { fill: var(--sparkle-fill); }

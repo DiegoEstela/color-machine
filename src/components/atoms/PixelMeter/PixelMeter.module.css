@@ -1,0 +1,7 @@
+.meter { display: flex; gap: var(--space-1); padding: var(--space-1); background: var(--color-surface); border: var(--border-w) solid var(--color-line); --meter-color: var(--color-disabled); }
+.meter[data-level='1'] { --meter-color: var(--color-peach); }
+.meter[data-level='2'] { --meter-color: var(--color-yellow); }
+.meter[data-level='3'] { --meter-color: var(--color-blue); }
+.meter[data-level='4'] { --meter-color: var(--color-mint); }
+.segment { flex: 1; height: var(--space-4); background: var(--color-disabled); }
+.segment[data-filled] { background: var(--meter-color); box-shadow: var(--bevel-light), var(--bevel-dark); }

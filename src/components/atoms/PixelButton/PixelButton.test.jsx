@@ -20,4 +20,9 @@ describe('PixelButton', () => {
     expect(btn).toHaveAttribute('data-variant', 'danger')
     expect(btn).toHaveAttribute('type', 'button')
   })
+  it('puede llevar un ícono decorativo antes del texto', () => {
+    const { container } = render(<PixelButton icon="camera">Foto</PixelButton>)
+    expect(screen.getByRole('button', { name: 'Foto' })).toBeInTheDocument()
+    expect(container.querySelector('svg')).toHaveAttribute('aria-hidden', 'true')
+  })
 })

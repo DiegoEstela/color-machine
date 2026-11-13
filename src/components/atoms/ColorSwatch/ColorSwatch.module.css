@@ -1,4 +1,5 @@
 .swatch {
+  position: relative;
   display: block;
   padding: 0;
   background: var(--swatch-color);
@@ -13,3 +14,16 @@
 button.swatch { cursor: pointer; }
 button.swatch:active { transform: translate(var(--shadow-step), var(--shadow-step)); box-shadow: var(--shadow-pixel-pressed); }
 .swatch[data-selected] { outline: var(--border-w-lg) solid var(--color-focus); outline-offset: 3px; }
+
+/* Brillo pixel en la esquina: da volumen al color sin cambiarlo. */
+.swatch::after {
+  content: '';
+  position: absolute;
+  top: var(--space-1);
+  left: var(--space-1);
+  width: var(--space-1);
+  height: var(--space-1);
+  background: var(--gloss);
+  box-shadow: var(--space-1) 0 0 var(--gloss), 0 var(--space-1) 0 var(--gloss);
+  pointer-events: none;
+}

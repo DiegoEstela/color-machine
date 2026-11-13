@@ -8,7 +8,13 @@ html {
 body {
   margin: 0;
   min-height: 100dvh;
-  background: var(--color-bg);
+  background-color: var(--color-bg);
+  /* damero de puntos muy suave (dither) que da textura sin competir con los colores del usuario */
+  background-image:
+    linear-gradient(45deg, var(--color-dither) 25%, transparent 25%, transparent 75%, var(--color-dither) 75%),
+    linear-gradient(45deg, var(--color-dither) 25%, transparent 25%, transparent 75%, var(--color-dither) 75%);
+  background-size: 8px 8px;
+  background-position: 0 0, 4px 4px;
   color: var(--color-ink);
   font-family: var(--font-body);
   font-size: var(--text-body);

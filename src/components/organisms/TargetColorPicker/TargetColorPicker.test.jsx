@@ -49,9 +49,9 @@ describe('TargetColorPicker', () => {
   it('en la pestaña Foto se puede elegir entre Recorte y Punto', () => {
     render(<TargetColorPicker value={null} onChange={() => {}} onNext={() => {}} />)
     fireEvent.click(screen.getByRole('button', { name: 'Foto' }))
-    expect(screen.getByRole('button', { name: 'Recorte' })).toHaveAttribute('aria-pressed', 'true')
-    fireEvent.click(screen.getByRole('button', { name: 'Punto' }))
-    expect(screen.getByRole('button', { name: 'Punto' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('radio', { name: 'Recorte' })).toHaveAttribute('aria-checked', 'true')
+    fireEvent.click(screen.getByRole('radio', { name: 'Punto' }))
+    expect(screen.getByRole('radio', { name: 'Punto' })).toHaveAttribute('aria-checked', 'true')
     expect(screen.getByText(/Tocá un punto de la foto/)).toBeInTheDocument()
   })
 

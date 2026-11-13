@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { describeQuality, enumerateRecipes, solve, PRECISION, DEFAULT_MAX_PARTS } from './solver.js'
+import { describeQuality, enumerateRecipes, qualityLevel, solve, PRECISION, DEFAULT_MAX_PARTS } from './solver.js'
 import { deltaE, mixHex } from './mixer.js'
 import { BASE_PAINTS } from './referencePaints.js'
 
@@ -35,6 +35,15 @@ describe('describeQuality', () => {
     [5, 'Parecido'], [9.99, 'Parecido'],
     [10, 'Aproximado'], [40, 'Aproximado'],
   ])('ΔE %s → %s', (dE, text) => expect(describeQuality(dE)).toBe(text))
+})
+
+describe('qualityLevel', () => {
+  it.each([[0, 4], [1.99, 4], [2, 3], [4.99, 3], [5, 2], [9.99, 2], [10, 1], [60, 1]])('ΔE %s → nivel %s', (dE, level) =>
+    expect(qualityLevel(dE)).toBe(level))
+  it('va en el mismo sentido que la descripción en palabras', () => {
+    const words = ['Aproximado', 'Parecido', 'Muy parecido', 'Casi idéntico']
+    for (const dE of [0, 1, 3, 7, 12]) expect(words[qualityLevel(dE) - 1]).toBe(describeQuality(dE))
+  })
 })
 
 describe('solve', () => {
