@@ -1,12 +1,20 @@
-.root { display: flex; flex-direction: column; gap: var(--space-4); align-items: center; }
+.root {
+  /* La rueda se adapta al ancho y al alto de la pantalla para que todo entre sin scroll. */
+  --wheel-size: clamp(132px, min(48vw, 32dvh), 220px);
+  display: grid;
+  grid-template-columns: var(--wheel-size) minmax(0, 1fr);
+  grid-template-areas: 'wheel aside' 'light light' 'fine fine';
+  gap: var(--space-3);
+}
 
 .wheel {
+  grid-area: wheel;
   position: relative;
-  width: min(100%, 320px);
-  aspect-ratio: 1;
+  width: var(--wheel-size);
+  height: var(--wheel-size);
   touch-action: none; /* arrastrar sobre la rueda no hace scroll */
   cursor: crosshair;
-  border: var(--border-w-lg) solid var(--color-line);
+  border: var(--border-w) solid var(--color-line);
   border-radius: 50%;
   background: var(--color-surface-alt);
   box-shadow: var(--shadow-pixel);
@@ -16,8 +24,8 @@
 
 .marker {
   position: absolute;
-  width: 20px;
-  height: 20px;
+  width: var(--space-4);
+  height: var(--space-4);
   transform: translate(-50%, -50%);
   background: var(--marker-color);
   border: var(--border-w) solid var(--color-line);
@@ -25,7 +33,25 @@
   pointer-events: none;
 }
 
-.sliders { display: flex; flex-direction: column; gap: var(--space-2); width: 100%; }
-.slider { display: flex; flex-direction: column; gap: var(--space-1); }
+.aside { grid-area: aside; display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; }
+
+.slider { display: grid; grid-template-columns: 5.5rem minmax(0, 1fr); align-items: center; gap: var(--space-2); }
+.light { grid-area: light; }
 .label { font-family: var(--font-pixel); font-size: var(--text-xs); line-height: var(--leading-pixel); }
-.slider input[type='range'] { width: 100%; min-height: var(--touch-min); accent-color: var(--color-focus); }
+.slider input[type='range'] { width: 100%; min-height: var(--touch-min); margin: 0; accent-color: var(--color-focus); }
+
+.fine { grid-area: fine; display: flex; flex-direction: column; }
+.summary {
+  min-height: var(--touch-min);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-pixel);
+  font-size: var(--text-xs);
+  list-style: none;
+  cursor: pointer;
+}
+.summary::-webkit-details-marker { display: none; }
+.summary::before { content: '+'; }
+.fine[open] .summary::before { content: '-'; }
+.fine[open] { gap: var(--space-1); }

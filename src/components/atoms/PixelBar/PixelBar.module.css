@@ -7,3 +7,6 @@
 }
 .segment { flex: 1; height: 16px; background: var(--color-disabled); }
 .segment[data-filled] { background: var(--bar-color, var(--color-lavender)); }
+
+.bar[data-size='sm'] { gap: 2px; padding: 2px; border-width: 2px; box-shadow: none; }
+.bar[data-size='sm'] .segment { height: 8px; }

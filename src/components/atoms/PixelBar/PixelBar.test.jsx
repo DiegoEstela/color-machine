@@ -8,4 +8,8 @@ describe('PixelBar', () => {
     expect(bar).toHaveAttribute('aria-valuenow', '4')
     expect(bar.children).toHaveLength(4)
   })
+  it('admite tamaño compacto', () => {
+    render(<PixelBar value={1} max={3} label="Paso" size="sm" />)
+    expect(screen.getByRole('progressbar')).toHaveAttribute('data-size', 'sm')
+  })
 })

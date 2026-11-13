@@ -1,7 +1,7 @@
 import styles from './PixelBar.module.css'
 
 /** Barra segmentada: `max` segmentos, `value` llenos. */
-export default function PixelBar({ value, max, color, label }) {
+export default function PixelBar({ value, max, color, label, size = 'md' }) {
   const filled = Math.max(0, Math.min(value, max))
   return (
     <div
@@ -11,6 +11,7 @@ export default function PixelBar({ value, max, color, label }) {
       aria-valuenow={filled}
       aria-label={label}
       className={styles.bar}
+      data-size={size}
       style={color ? { '--bar-color': color } : undefined}
     >
       {Array.from({ length: max }, (_, i) => (

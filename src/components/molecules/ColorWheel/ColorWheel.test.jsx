@@ -32,4 +32,17 @@ describe('ColorWheel', () => {
     render(<ColorWheel value={null} onChange={() => {}} />)
     expect(screen.getByLabelText('Claridad')).toBeInTheDocument()
   })
+
+  it('Claridad queda visible y Matiz/Saturación dentro de "Ajuste fino"', () => {
+    render(<ColorWheel value="#ff0000" onChange={() => {}} />)
+    const fine = screen.getByText('Ajuste fino').closest('details')
+    expect(fine).not.toHaveAttribute('open')
+    expect(fine).toContainElement(screen.getByLabelText('Matiz'))
+    expect(fine).toContainElement(screen.getByLabelText('Saturación'))
+    expect(fine).not.toContainElement(screen.getByLabelText('Claridad'))
+  })
+  it('muestra el contenido de `aside` junto a la rueda', () => {
+    render(<ColorWheel value={null} onChange={() => {}} aside={<p>vista del color</p>} />)
+    expect(screen.getByText('vista del color')).toBeInTheDocument()
+  })
 })

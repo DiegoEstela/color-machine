@@ -1,0 +1,10 @@
+.box { display: flex; gap: var(--space-2); flex: 1; min-height: var(--touch-min); min-width: 0; }
+.box[data-empty] {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background: var(--color-surface-alt);
+  border: var(--border-w) dashed var(--color-ink-soft);
+}
+.swatch { flex: 1; min-width: 0; display: flex; }
+.thumb { flex: 1; min-width: 0; height: 100%; object-fit: cover; border: var(--border-w) solid var(--color-line); image-rendering: pixelated; }

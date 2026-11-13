@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
-import { PixelButton, PixelPanel, PixelText } from './components/atoms/index.js'
-import { authService, useAuthStore } from './features/auth/index.js'
+import { PixelPanel, PixelText } from './components/atoms/index.js'
+import { useAuthStore } from './features/auth/index.js'
 import Auth from './pages/Auth/Auth.jsx'
 import Catalog from './pages/Catalog/Catalog.jsx'
 import Create from './pages/Create/Create.jsx'
@@ -30,13 +30,5 @@ export default function App() {
   }
   if (status === 'signedOut' || recovering) return <Auth />
 
-  return (
-    <>
-      <header className={styles.header}>
-        <PixelText size="sm">Color Machine</PixelText>
-        <PixelButton variant="secondary" size="sm" onClick={() => authService.signOut()}>Salir</PixelButton>
-      </header>
-      {showCatalog ? <Catalog /> : <Create />}
-    </>
-  )
+  return showCatalog ? <Catalog /> : <Create />
 }

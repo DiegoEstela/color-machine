@@ -1,11 +1,15 @@
 .frame {
   position: relative;
+  display: block;
+  width: fit-content; /* el marco abraza a la foto para que el recuadro coincida con la imagen */
+  max-width: 100%;
+  margin-inline: auto;
   line-height: 0;
   border: var(--border-w-lg) solid var(--color-line);
   box-shadow: var(--shadow-pixel);
   background: var(--color-surface-alt);
 }
-.canvas { display: block; width: 100%; height: auto; max-height: 60dvh; object-fit: contain; image-rendering: auto; cursor: crosshair; }
+.canvas { display: block; width: auto; height: auto; max-width: 100%; max-height: max(120px, min(28dvh, calc(100dvh - 400px))); object-fit: contain; image-rendering: auto; cursor: crosshair; }
 .crosshair {
   position: absolute;
   width: 24px;

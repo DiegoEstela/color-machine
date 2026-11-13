@@ -1,6 +1,7 @@
 import { PixelButton, PixelText, ColorSwatch } from '../../components/atoms/index.js'
 import { PaintsStep, TargetColorPicker } from '../../components/organisms/index.js'
 import { WizardLayout } from '../../components/templates/index.js'
+import { authService } from '../../features/auth/index.js'
 import { TOTAL_STEPS, useMixStore } from '../../features/color-mixer/mixStore.js'
 import { usePaintsStore } from '../../features/paints/paintsStore.js'
 import styles from './Create.module.css'
@@ -15,6 +16,8 @@ function TargetReference({ color, thumb }) {
   )
 }
 
+const signOut = () => authService.signOut()
+
 export default function Create() {
   const step = useMixStore((s) => s.step)
   const targetColor = useMixStore((s) => s.targetColor)
@@ -25,7 +28,7 @@ export default function Create() {
 
   if (step === 1) {
     return (
-      <WizardLayout step={1} total={TOTAL_STEPS} title="Elegí tu color">
+      <WizardLayout step={1} total={TOTAL_STEPS} title="Elegí tu color" onSignOut={signOut}>
         <TargetColorPicker
           value={targetColor}
           thumbnail={targetThumb}
@@ -39,7 +42,7 @@ export default function Create() {
 
   if (step === 2) {
     return (
-      <WizardLayout step={2} total={TOTAL_STEPS} title="Tus pinturas">
+      <WizardLayout step={2} total={TOTAL_STEPS} title="Tus pinturas" onSignOut={signOut}>
         <div className={styles.stack}>
           <TargetReference color={targetColor} thumb={targetThumb} />
           <PaintsStep onBack={back} onNext={next} />
@@ -51,7 +54,7 @@ export default function Create() {
   // Provisorio: el cálculo de proporciones llega en el próximo spec.
   const chosen = paints.filter((p) => selectedIds.includes(p.id))
   return (
-    <WizardLayout step={step} total={TOTAL_STEPS} title="Mezcla">
+    <WizardLayout step={step} total={TOTAL_STEPS} title="Mezcla" onSignOut={signOut}>
       <div className={styles.stack}>
         <TargetReference color={targetColor} thumb={targetThumb} />
         <div className={styles.row}>

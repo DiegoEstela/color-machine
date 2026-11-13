@@ -1,7 +1,10 @@
-.root { display: flex; flex-direction: column; gap: var(--space-5); }
-.tabs { display: flex; gap: var(--space-3); }
+.root { display: flex; flex-direction: column; gap: var(--space-3); }
+.tabs { display: flex; gap: var(--space-2); }
 .tabs > button { flex: 1; }
-.photo, .result { display: flex; flex-direction: column; gap: var(--space-3); }
-.preview { display: flex; gap: var(--space-3); align-items: stretch; }
-.swatch { flex: 1; min-width: 0; }
-.thumb { width: 96px; height: 160px; object-fit: cover; border: var(--border-w) solid var(--color-line); box-shadow: var(--shadow-pixel); image-rendering: pixelated; }
+.photo { display: flex; flex-direction: column; gap: var(--space-2); }
+.result { display: flex; flex-direction: column; gap: var(--space-2); flex: 1; min-width: 0; }
+
+/* En la pestaña Foto la vista del color y el hex van en una fila. */
+.resultRow .result { flex-direction: row; align-items: flex-end; }
+.resultRow .result > :first-child { flex: 1; min-height: var(--touch-lg); }
+.resultRow .result > :last-child { flex: 1.4; }

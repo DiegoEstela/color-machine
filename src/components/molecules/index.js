@@ -5,3 +5,4 @@ export { default as PhotoColorPicker } from './PhotoColorPicker/PhotoColorPicker
 export { default as PhotoCropper } from './PhotoCropper/PhotoCropper.jsx'
 export { default as PaintForm } from './PaintForm/PaintForm.jsx'
 export { default as PaintCard } from './PaintCard/PaintCard.jsx'
+export { default as ColorPreview } from './ColorPreview/ColorPreview.jsx'

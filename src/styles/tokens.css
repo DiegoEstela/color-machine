@@ -51,7 +51,8 @@
   --shadow-pixel-pressed: 0 0 0 var(--color-line);
 
   /* Tamaños táctiles */
-  --touch-min: 48px;
+  --touch-min: 44px;
+  --touch-lg: 48px;
 
   /* Capas y tiempos */
   --z-header: 10;

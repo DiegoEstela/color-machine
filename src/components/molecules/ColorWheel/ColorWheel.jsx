@@ -23,14 +23,16 @@ function drawWheel(canvas, lightness) {
   ctx.putImageData(img, 0, 0)
 }
 
-const SLIDERS = [
+const FINE = [
   { key: 'h', label: 'Matiz', max: 360 },
   { key: 's', label: 'Saturación', max: 100 },
-  { key: 'l', label: 'Claridad', max: 100 },
 ]
 
-/** Rueda de color (matiz = ángulo, saturación = radio) y control de claridad. `value` puede ser null. */
-export default function ColorWheel({ value, onChange }) {
+/**
+ * Rueda de color (matiz = ángulo, saturación = radio) con control de claridad y un plegable "Ajuste fino"
+ * (matiz y saturación, también para teclado). `value` puede ser null. `aside` se muestra al costado de la rueda.
+ */
+export default function ColorWheel({ value, onChange, aside }) {
   const canvasRef = useRef(null)
   const [hsl, setHsl] = useState(() => (value ? hexToHsl(value) : DEFAULT_HSL))
 
@@ -92,8 +94,23 @@ export default function ColorWheel({ value, onChange }) {
         />
       </div>
 
-      <div className={styles.sliders}>
-        {SLIDERS.map(({ key, label, max }) => (
+      {aside && <div className={styles.aside}>{aside}</div>}
+
+      <label className={`${styles.slider} ${styles.light}`}>
+        <span className={styles.label}>Claridad</span>
+        <input
+          type="range"
+          min={0}
+          max={100}
+          step={1}
+          value={Math.round(hsl.l)}
+          onChange={(e) => update({ ...hsl, l: Number(e.target.value) })}
+        />
+      </label>
+
+      <details className={styles.fine}>
+        <summary className={styles.summary}>Ajuste fino</summary>
+        {FINE.map(({ key, label, max }) => (
           <label key={key} className={styles.slider}>
             <span className={styles.label}>{label}</span>
             <input
@@ -106,7 +123,7 @@ export default function ColorWheel({ value, onChange }) {
             />
           </label>
         ))}
-      </div>
+      </details>
     </div>
   )
 }
