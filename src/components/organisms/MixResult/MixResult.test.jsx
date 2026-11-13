@@ -188,16 +188,16 @@ describe('MixResult: sumar el color sugerido', () => {
     expect(screen.getByRole('img', { name: `Blanco ${blanco.hex}` })).toBeInTheDocument()
   })
 
-  it('al sumar una pintura la lista baja para mostrarla completa', async () => {
-    const original = HTMLElement.prototype.scrollTo
-    const scrollTo = vi.fn()
-    HTMLElement.prototype.scrollTo = scrollTo
+  it('al sumar una pintura la pantalla se desplaza para mostrar su fila', async () => {
+    const original = HTMLElement.prototype.scrollIntoView
+    const scrollIntoView = vi.fn()
+    HTMLElement.prototype.scrollIntoView = scrollIntoView
     await mount()
-    scrollTo.mockClear()
+    scrollIntoView.mockClear()
     fireEvent.click(await sumarBlanco())
     await screen.findByText('estándar', {}, { timeout: 4000 })
-    await waitFor(() => expect(scrollTo).toHaveBeenCalledWith(expect.objectContaining({ top: expect.any(Number) })))
-    HTMLElement.prototype.scrollTo = original
+    await waitFor(() => expect(scrollIntoView).toHaveBeenCalledWith({ block: 'nearest' }))
+    HTMLElement.prototype.scrollIntoView = original
   })
 
   it('la pintura sumada aparece con la etiqueta "estándar" y el resultado mejora', async () => {
@@ -341,5 +341,58 @@ describe('MixResult: guardar la receta', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Guardar' }))
     fireEvent.click(await screen.findByRole('button', { name: 'Ver mis recetas' }))
     expect(window.location.hash).toBe('#/recetas')
+  })
+})
+
+describe('MixResult: ajustar luz e intensidad', () => {
+  const openPanel = async () => {
+    renderMix()
+    await ready()
+    fireEvent.click(screen.getByRole('button', { name: /Ajustar/ }))
+    return screen.getByRole('dialog', { name: 'Ajustar tu mezcla' })
+  }
+
+  it('el botón Ajustar está deshabilitado mientras mezcla y habilitado con la receta lista', async () => {
+    renderMix()
+    expect(screen.getByRole('button', { name: /Ajustar/ })).toBeDisabled()
+    await ready()
+    expect(screen.getByRole('button', { name: /Ajustar/ })).toBeEnabled()
+  })
+
+  it('sin ajuste no hay chip y el resultado es el de siempre', async () => {
+    renderMix()
+    await ready()
+    expect(screen.queryByText(/^Ajustada:/)).not.toBeInTheDocument()
+    expect(useMixStore.getState().result.key).toBe(JSON.stringify([target, useMixStore.getState().maxParts, paints.map((p) => [p.id, p.hex])]))
+  })
+
+  it('"Más claro" recalcula apuntando a un color más claro y deja el panel abierto', async () => {
+    const dialog = await openPanel()
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Más claro' }))
+    expect(useMixStore.getState().tweak).toEqual({ light: 1, vivid: 0 })
+    expect(screen.getByRole('dialog', { name: 'Ajustar tu mezcla' })).toBeInTheDocument()
+    await waitFor(() => expect(useMixStore.getState().result?.status).toBe('ready'), { timeout: 4000 })
+    expect(useMixStore.getState().result.data.best.aimDeltaE).toBeDefined()
+    expect(screen.getByRole('dialog', { name: 'Ajustar tu mezcla' })).toBeInTheDocument()
+  })
+
+  it('al cerrar el panel se ve el chip del ajuste y la ✕ lo quita', async () => {
+    const dialog = await openPanel()
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Más intenso' }))
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Listo' }))
+    expect(screen.getByText('Ajustada: +1 intensidad')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Quitar el ajuste' }))
+    expect(useMixStore.getState().tweak).toEqual({ light: 0, vivid: 0 })
+    expect(screen.queryByText(/^Ajustada:/)).not.toBeInTheDocument()
+  })
+
+  it('el panel ofrece sumar blanco cuando falta para aclarar', async () => {
+    render(<MixResult target={lavender} paints={nobodyHome} onAddPaint={() => {}} />)
+    await ready()
+    fireEvent.click(screen.getByRole('button', { name: /Ajustar/ }))
+    const dialog = screen.getByRole('dialog', { name: 'Ajustar tu mezcla' })
+    expect(await within(dialog).findByText(/Te falta blanco/, {}, { timeout: 4000 })).toBeInTheDocument()
+    fireEvent.click(await within(dialog).findByRole('button', { name: /Sumar Blanco/ }, { timeout: 4000 }))
+    expect(useMixStore.getState().extraPaints.map((p) => p.id)).toEqual(['base-blanco'])
   })
 })

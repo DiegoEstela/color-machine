@@ -5,7 +5,7 @@ App web **mobile-first e instalable (PWA)** para **crear colores mezclando pintu
 Repo: `github.com/DiegoEstela/color-machine` (rama `main`). Se despliega solo en **Vercel** con cada push. Base de datos y login en **Supabase** (proyecto del usuario; la URL y la clave pública están en su `.env`, que no se versiona).
 
 ## Estado actual (leer primero)
-**Los 13 specs del plan están implementados y subidos** (ver "Índice de specs"). El ciclo completo funciona: elegir color → elegir pinturas → calcular proporciones → guardar receta → biblioteca. **Lo que NO se pudo comprobar en esta etapa** (solo se verificó con tests y con Chrome simulando un móvil), y que el usuario va a probar en su teléfono:
+**Los 15 specs del plan están implementados y subidos** (ver "Índice de specs"). El ciclo completo funciona: elegir color → elegir pinturas → calcular proporciones → guardar receta → biblioteca. **Lo que NO se pudo comprobar en esta etapa** (solo se verificó con tests y con Chrome simulando un móvil), y que el usuario va a probar en su teléfono:
 - Instalación real como app (Android/iPhone) sin cabecera del navegador (spec 011).
 - **iPhone/Safari:** que pellizcar la foto no agrande toda la pantalla (spec 010), el teclado con la barra inferior, la hoja ⓘ y la barra de gestos.
 - **Supabase real:** guardar/listar recetas y pinturas con su cuenta, y que **otra cuenta no vea esos datos** (RLS). Requiere haber ejecutado `supabase/migrations/0001_init.sql` en el SQL Editor (no hay CLI de Supabase: Xcode viejo impide `brew install supabase`).
@@ -50,8 +50,8 @@ src/
 supabase/migrations/0001_init.sql    scripts/generate-icons.mjs    specs/    .claude/commands/
 ```
 - **Átomos:** PixelButton, PixelIconButton, PixelText, PixelPanel (con barra de título), PixelInput, PixelIcon (8×8), PixelJar (frasco), PixelLogo, PixelSparkle, PixelMeter, PixelBar, ColorSwatch. Los dibujos pixel viven en el `grid.js` de cada átomo.
-- **Moléculas:** Drawer, ColorWheel, PhotoPicker, PhotoViewport (zoom), PhotoCropper, PhotoColorPicker, ColorPreview, PaintCard, PaintForm, PaintAdvice, OptionGroup, StepIndicator, TabBar, RecipeRow, ColorCompare, MixingAnimation, InfoSheet, SaveRecipe, RecipeNameForm, RecipeCard, AuthField.
-- **Organismos:** TargetColorPicker, PaintsStep, PaintCapture, PaintList, MixResult, RecipeLibrary, RecipeDetail, AuthForm. **Plantilla:** AppShell.
+- **Moléculas:** TweakControl, Drawer, ColorWheel, PhotoPicker, PhotoViewport (zoom), PhotoCropper, PhotoColorPicker, ColorPreview, PaintCard, PaintForm, PaintAdvice, OptionGroup, StepIndicator, TabBar, RecipeRow, ColorCompare, MixingAnimation, InfoSheet, SaveRecipe, RecipeNameForm, RecipeCard, AuthField.
+- **Organismos:** TweakSheet, TargetColorPicker, PaintsStep, PaintCapture, PaintList, MixResult, RecipeLibrary, RecipeDetail, AuthForm. **Plantilla:** AppShell.
 
 ## Estructura de app (pantalla completa)
 - Toda pantalla con sesión usa **`AppShell`**: barra superior de **48 px** (☰/atrás, título, pasos), contenido con su propio scroll y **barra de pestañas de 56 px** (Recetas · Crear · Cuenta), más la zona segura del teléfono. **La página nunca hace scroll ni rebota** (`html/body overflow:hidden`, `overscroll-behavior:none`); solo scrollea el contenido. No cambiar el alto de las barras ni agregar scroll de página.
@@ -60,13 +60,14 @@ supabase/migrations/0001_init.sql    scripts/generate-icons.mjs    specs/    .cl
 - **Escala compacta:** textos 9–20 px (cuerpo 15 px), bordes 2 px, sombras 3 px. Los botones **se ven de 40 px (34 px los chicos) pero responden como 44 px** con un `::after` invisible. **Al calcular ese `::after`, restar el borde** (`inset` se mide desde el borde interno). Patrón en `PixelButton` y `PixelIconButton`; mantenerlo en controles nuevos (`hitBias="up"` si abajo hay botones pegados).
 - El texto de la interfaz no se selecciona (`user-select:none`); los inputs sí. Sin zoom por doble toque (`touch-action: manipulation`).
 - **El paso 1 debe entrar sin scroll** (Rueda: 360×640, 390×844, 360×560; Foto: 360×640 y 390×844). Cualquier cambio de tamaño ahí se vuelve a medir.
-- **Paso 3:** la "zona del resultado" mide **208 px siempre** (mezclando, recomendada, más exacta, cualquier precisión): no hay saltos. La lista de frasquitos ocupa el resto (3 filas) y es lo único que scrollea si hay más pinturas. Con el aviso de "sumá otro color" a 360×640 quedan ~30 px de scroll interno (aceptado).
+- **Paso 3 (spec 015):** la "zona del resultado" tiene **alto mínimo de 208 px** (no hay saltos entre mezclando y receta con hasta 3 pinturas); la lista de frasquitos **no tiene scroll propio**: si hay más, scrollea el contenido de la pantalla. `AppShell` lleva un degradé inferior (`useCanScrollMore`) que avisa cuando hay más abajo, y 20 px de aire al final del contenido.
 
 ## Mezcla de colores (reglas del dominio)
 - `mixer.mixHex(entries)` mezcla con spectral.js; `deltaE` = CIEDE2000. Calidad: ΔE < 2 "Casi idéntico", < 5 "Muy parecido", < 10 "Parecido", ≥ 10 "Aproximado" (`describeQuality`, `qualityLevel` 4–1).
 - `solver.solve({target, paints, maxParts, maxPaints})`: enumera recetas de partes enteras **primitivas** (sin 2:2), **máximo 4 pinturas distintas por receta**, ordenadas por ΔE. `recommended` = la de menos partes dentro de ΔE+1 del mejor; `best` = menor ΔE; `alternatives` se calculan pero **la pantalla no las muestra**. Corre en un **Web Worker** (`solver.worker.js`) vía `solverClient` (con respaldo en el hilo principal); jsdom no tiene Worker.
 - `advisor`: `adviseBasePaints` (qué bases usar para el objetivo), `matchPaints` (cuáles ya tiene el usuario, ΔE ≤ 30, una pintura no cubre dos bases), `suggestAdditions` (qué sumar si ΔE ≥ 5; mejora ≥ 3 o sube de categoría), `diagnose` (por qué falta: blanco/negro/tono).
 - **Pinturas base estándar** (`referencePaints.js`, `standard: true`): Rojo `#e4002b`, Amarillo `#fcd116`, Azul `#1d3fbb`, Blanco `#ffffff`, Negro `#141414`. Ajustarlas ahí si los consejos no se parecen a la realidad.
+- **Ajustar (spec 016):** `tweak.js` — `shiftTarget(hex, {light, vivid})` corre la claridad (Lab L ±4 por paso) y el croma (×1,12 por paso) del objetivo; `solve({…, aim})` ordena/elige por la distancia a `aim` pero `deltaE`/`quality` se miden contra el objetivo real (`aimDeltaE` solo existe con `aim`; `rankOf` ordena). `mixStore.tweak` (±3, entra en `resultKey` solo si no es neutro) se reinicia al cambiar de objetivo/`remix`/`reset`. UI: botón "Ajustar" → `TweakSheet` (usa `InfoSheet`, `TweakControl` por eje) + chip "Ajustada: …". `describeNeeds` traduce `diagnose` a "te falta blanco/negro…". La receta guardada es la ajustada (sin migración).
 - Límites: **2–6 pinturas por mezcla** (`MIN/MAX_SELECTED` en `paintsStore`; las sumadas con "+" cuentan); recetas guardadas hasta 12 pinturas en la base (las reales ≤ 4).
 - `mixStore` guarda: paso, color objetivo (+ miniatura en memoria), precisión, `recipeKey` (`recommended`|`best`), `result` (con clave `resultKey`: un resultado de otros datos no se muestra), `extraPaints` (estándar sumadas en el paso 3; se descartan al cambiar el objetivo), `savedRecipes` (firma → id, evita duplicar). `reset()` limpia todo.
 
@@ -91,7 +92,7 @@ supabase/migrations/0001_init.sql    scripts/generate-icons.mjs    specs/    .cl
 2. El usuario aprueba ("aprobado", "con las opciones propuestas") o pide cambios → pasa a `aprobado`. Si cambia de idea, se actualiza el spec o se crea uno nuevo.
 3. `/implement NNN` → implementa **solo** lo del spec, con tests; corre `npm test`, `npm run lint` y `npm run build`; marca los criterios cumplidos con honestidad (los que no se pudieron comprobar quedan explicados) y pasa el estado a `implementado`. **No hace commit.**
 4. `/ship` → revisa estado/diff/secretos, corre tests y build, **muestra resumen y mensaje de commit y espera confirmación explícita** ("sí, confirmo") antes de `git commit` y `git push`.
-- **Nunca implementar sin spec aprobado.** Trabajo nuevo = spec nuevo (el siguiente número es **014**).
+- **Nunca implementar sin spec aprobado.** Trabajo nuevo = spec nuevo (el siguiente número es **017**; el 014, onboarding, está en borrador).
 - Al terminar cada implementación: resumen corto de qué cambió, qué se midió y **qué falta probar en el teléfono**.
 
 ## Git y commits
@@ -128,6 +129,8 @@ supabase/migrations/0001_init.sql    scripts/generate-icons.mjs    specs/    .cl
 | 011 | PWA instalable, íconos, service worker, errores de red |
 | 012 | Paso 3 compacto y sumar el color sugerido al instante |
 | 013 | Navegación nativa: barra con Crear central, ☰ + menú lateral (drawer), Mis pinturas (`#/pinturas`), gesto de borde |
+| 015 | Paso 3 con scroll natural: zona de resultado con alto mínimo, lista sin scroll propio, degradé "hay más abajo" |
+| 016 | Ajustar la mezcla: Luz e Intensidad (±3 pasos) con panel, y qué sumar |
 
 ## Ideas posibles (no especificadas todavía)
 Calculador de cantidades ("quiero 100 ml"), búsqueda y filtros en la biblioteca, compartir/exportar recetas, calibrar con la mezcla real del usuario, volver a mostrar recetas alternativas, subir el límite de resolución de la foto, botón "Instalar app" dentro de Cuenta, paginación de recetas, modo oscuro, login con Google.

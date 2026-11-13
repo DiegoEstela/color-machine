@@ -60,6 +60,13 @@ describe('AppShell', () => {
     expect(screen.queryByRole('button', { name: /sesión/i })).not.toBeInTheDocument()
   })
 
+  it('tiene un degradé decorativo de "hay más abajo", oculto si el contenido entra entero', () => {
+    render(<AppShell title="t">x</AppShell>)
+    const fade = screen.getByTestId('scroll-fade')
+    expect(fade).toHaveAttribute('aria-hidden', 'true')
+    expect(fade).not.toHaveAttribute('data-visible') // jsdom mide 0: no hay nada más abajo
+  })
+
   it('vuelve el contenido arriba cuando cambia scrollKey', () => {
     const scrollTo = vi.fn()
     const original = HTMLElement.prototype.scrollTo

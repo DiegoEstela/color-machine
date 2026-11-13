@@ -123,3 +123,33 @@ describe('solve', () => {
     expect(DEFAULT_MAX_PARTS).toBe(10)
   })
 })
+
+describe('solve con aim (apuntar a otro color)', () => {
+  const target = '#c07a7a'
+  const paints = [rojo, blanco, negro]
+
+  it('sin aim da exactamente lo mismo que antes y no agrega aimDeltaE', () => {
+    const a = solve({ target, paints })
+    const b = solve({ target, paints, aim: undefined })
+    expect(b).toEqual(a)
+    expect(a.best.aimDeltaE).toBeUndefined()
+  })
+
+  it('con aim más claro la mejor receta es más clara y deltaE sigue midiéndose contra el objetivo real', () => {
+    const lighter = '#e0b0b0'
+    const plain = solve({ target, paints })
+    const aimed = solve({ target, paints, aim: lighter })
+    expect(aimed.best.aimDeltaE).toBeCloseTo(deltaE(lighter, aimed.best.mixHex), 6)
+    expect(aimed.best.deltaE).toBeCloseTo(deltaE(target, aimed.best.mixHex), 6)
+    // más blanco que la receta sin ajuste
+    const whiteParts = (r) => r.parts.find((p) => p.paintId === blanco.id)?.parts ?? 0
+    expect(whiteParts(aimed.best) / aimed.best.total).toBeGreaterThan(whiteParts(plain.best) / plain.best.total)
+    // y por eso queda un poco más lejos del color real (o igual)
+    expect(aimed.best.deltaE).toBeGreaterThanOrEqual(plain.best.deltaE - 1e-9)
+  })
+
+  it('best es la de menor aimDeltaE', () => {
+    const aimed = solve({ target, paints, aim: '#e0b0b0' })
+    expect(aimed.recommended.aimDeltaE).toBeLessThanOrEqual(aimed.best.aimDeltaE + 1 + 1e-9)
+  })
+})

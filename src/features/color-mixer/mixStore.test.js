@@ -172,3 +172,48 @@ describe('mixStore: pinturas sumadas a la mezcla', () => {
   })
 })
 
+
+describe('mixStore: ajuste de luz e intensidad', () => {
+  const rojo = { id: 'r', name: 'Rojo', hex: '#e4002b' }
+  const blanco = { id: 'b', name: 'Blanco', hex: '#ffffff' }
+
+  it('empieza sin ajuste y lo recorta a ±3', () => {
+    expect(s().tweak).toEqual({ light: 0, vivid: 0 })
+    s().setTweak({ light: 5, vivid: -1 })
+    expect(s().tweak).toEqual({ light: 3, vivid: -1 })
+    s().resetTweak()
+    expect(s().tweak).toEqual({ light: 0, vivid: 0 })
+  })
+
+  it('la clave sin ajuste es la de siempre y con ajuste cambia', () => {
+    const base = resultKey('#aabbcc', [rojo], 10)
+    expect(resultKey('#aabbcc', [rojo], 10, { light: 0, vivid: 0 })).toBe(base)
+    expect(resultKey('#aabbcc', [rojo], 10, { light: 1, vivid: 0 })).not.toBe(base)
+  })
+
+  it('con ajuste calcula apuntando a otro color pero mide contra el objetivo real', async () => {
+    s().setTweak({ light: 2, vivid: 0 })
+    await s().calculate({ target: '#c07a7a', paints: [rojo, blanco] })
+    const { best } = s().result.data
+    expect(s().result.key).toBe(resultKey('#c07a7a', [rojo, blanco], s().maxParts, { light: 2, vivid: 0 }))
+    expect(best.aimDeltaE).toBeDefined()
+  })
+
+  it('el ajuste se reinicia al cambiar el color objetivo, pero no al repetirlo', () => {
+    s().setTarget('#112233')
+    s().setTweak({ light: 1, vivid: 1 })
+    s().setTarget('#112233')
+    expect(s().tweak).toEqual({ light: 1, vivid: 1 })
+    s().setTarget('#445566')
+    expect(s().tweak).toEqual({ light: 0, vivid: 0 })
+  })
+
+  it('"mezclar otra vez" y reset limpian el ajuste', () => {
+    s().setTweak({ light: 2, vivid: 2 })
+    s().remix('#123456')
+    expect(s().tweak).toEqual({ light: 0, vivid: 0 })
+    s().setTweak({ light: 2, vivid: 2 })
+    s().reset()
+    expect(s().tweak).toEqual({ light: 0, vivid: 0 })
+  })
+})

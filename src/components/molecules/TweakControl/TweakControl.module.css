@@ -1,0 +1,19 @@
+.root { display: flex; flex-direction: column; gap: var(--space-2); }
+.row { display: flex; align-items: center; gap: var(--space-4); padding: 0 var(--space-2); }
+.track {
+  flex: 1;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: var(--space-1);
+  height: 20px;
+  padding: var(--space-1);
+  background: var(--color-surface);
+  border: var(--border-w) solid var(--color-line);
+}
+.track:focus-visible { outline: var(--border-w-lg) solid var(--color-focus); outline-offset: 2px; }
+.track[aria-disabled] { border-color: var(--color-ink-soft); }
+.cell { background: var(--color-disabled); }
+.cell[data-center] { background: var(--color-ink-soft); }
+.cell[data-on] { background: var(--color-pink); box-shadow: inset 0 0 0 var(--border-w) var(--color-line); }
+.ends { display: flex; justify-content: space-between; padding: 0 var(--space-2); }

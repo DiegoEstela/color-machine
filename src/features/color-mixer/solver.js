@@ -53,40 +53,48 @@ export function qualityLevel(dE) {
   return 1
 }
 
-const buildRecipe = (paints, amounts, target) => {
+const buildRecipe = (paints, amounts, target, aim) => {
   const parts = paints
     .map((p, i) => ({ paintId: p.id, name: p.name, hex: p.hex, parts: amounts[i] }))
     .filter((p) => p.parts > 0)
   const mixed = mixHex(parts)
   const dE = deltaE(target, mixed)
-  return { parts, total: parts.reduce((s, p) => s + p.parts, 0), mixHex: mixed, deltaE: dE, quality: describeQuality(dE) }
+  const recipe = { parts, total: parts.reduce((s, p) => s + p.parts, 0), mixHex: mixed, deltaE: dE, quality: describeQuality(dE) }
+  // Con `aim`, además se guarda la distancia al color al que se apunta (que decide el orden); `deltaE` sigue siendo contra el real.
+  if (aim) recipe.aimDeltaE = deltaE(aim, mixed)
+  return recipe
 }
 
-const byQuality = (a, b) => a.deltaE - b.deltaE || a.total - b.total || a.mixHex.localeCompare(b.mixHex)
+/** Distancia que ordena las recetas: al color al que se apunta (`aim`) si lo hay, y si no, al color objetivo. */
+export const rankOf = (recipe) => recipe.aimDeltaE ?? recipe.deltaE
+
+const byQuality = (a, b) => rankOf(a) - rankOf(b) || a.total - b.total || a.mixHex.localeCompare(b.mixHex)
 
 /**
  * Busca las mejores recetas de partes enteras para acercarse a `target` con `paints` ([{ id, name, hex }]).
  * Devuelve `{ recommended, best, alternatives }` (null si no hay pinturas):
  * - best: menor ΔE.
+ * - `aim` (opcional): color al que apunta el cálculo (por ejemplo, el objetivo corrido para "más luz"). Ordena y elige
+ *   las recetas, pero `deltaE` y `quality` se siguen midiendo contra `target`; `aimDeltaE` es la distancia a `aim`.
  * - recommended: la de menos partes cuyo ΔE no supera el mejor en más de 1.
  * - alternatives: hasta 2 recetas distintas a simple vista, casi tan buenas.
  */
-export function solve({ target, paints, maxParts = DEFAULT_MAX_PARTS, maxPaints = DEFAULT_MAX_PAINTS }) {
+export function solve({ target, paints, maxParts = DEFAULT_MAX_PARTS, maxPaints = DEFAULT_MAX_PAINTS, aim }) {
   if (!paints || paints.length === 0) return null
   const recipes = enumerateRecipes(paints.length, maxParts, maxPaints)
-    .map((amounts) => buildRecipe(paints, amounts, target))
+    .map((amounts) => buildRecipe(paints, amounts, target, aim))
     .sort(byQuality)
 
   const best = recipes[0]
   const recommended = recipes
-    .filter((r) => r.deltaE <= best.deltaE + RECOMMENDED_TOLERANCE)
-    .reduce((a, b) => (b.total < a.total || (b.total === a.total && b.deltaE < a.deltaE) ? b : a))
+    .filter((r) => rankOf(r) <= rankOf(best) + RECOMMENDED_TOLERANCE)
+    .reduce((a, b) => (b.total < a.total || (b.total === a.total && rankOf(b) < rankOf(a)) ? b : a))
 
   const picked = [best, recommended]
   const alternatives = []
   for (const r of recipes) {
     if (alternatives.length === 2) break
-    if (r.deltaE > best.deltaE + ALTERNATIVE_WINDOW) break
+    if (rankOf(r) > rankOf(best) + ALTERNATIVE_WINDOW) break
     if (picked.some((p) => p === r || deltaE(p.mixHex, r.mixHex) < 1)) continue
     picked.push(r)
     alternatives.push(r)

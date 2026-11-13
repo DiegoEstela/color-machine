@@ -87,6 +87,7 @@
   --dur-drawer: 220ms;
 
   /* Navegación nativa */
+  --fade-h: 24px; /* degradé "hay más abajo" */
   --drawer-w: min(280px, 82vw);
   --fab-size: 40px;
 }

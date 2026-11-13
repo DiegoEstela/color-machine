@@ -5,6 +5,7 @@ import { useAuthStore } from '../../../features/auth/index.js'
 import { MENU_SECTIONS, menuItemFor } from '../../../features/navigation/menuItems.js'
 import { useNavigationStore } from '../../../features/navigation/navigationStore.js'
 import { useRoute } from '../../../features/navigation/useRoute.js'
+import { useCanScrollMore } from '../../../hooks/useCanScrollMore.js'
 import { useEdgeSwipe } from '../../../hooks/useEdgeSwipe.js'
 import { tap } from '../../../lib/haptics.js'
 import styles from './AppShell.module.css'
@@ -21,6 +22,7 @@ export default function AppShell({ title, actions, back, activeTab, scrollKey, c
   const contentRef = useRef(null)
   useEffect(() => { contentRef.current?.scrollTo?.(0, 0) }, [scrollKey])
 
+  const canScrollMore = useCanScrollMore(contentRef, scrollKey)
   const { route } = useRoute()
   const email = useAuthStore((s) => s.user?.email)
   const drawerOpen = useNavigationStore((s) => s.drawerOpen)
@@ -47,7 +49,11 @@ export default function AppShell({ title, actions, back, activeTab, scrollKey, c
         <PixelText as="h1" size="sm" className={styles.title}>{title}</PixelText>
         {actions && <div className={styles.actions}>{actions}</div>}
       </header>
-      <main ref={contentRef} className={styles.content}>{children}</main>
+      <div className={styles.body}>
+        <main ref={contentRef} className={styles.content}>{children}</main>
+        {/* Degradé suave: avisa que hay más contenido abajo. No intercepta toques. */}
+        <div className={styles.fade} data-visible={canScrollMore || undefined} aria-hidden="true" data-testid="scroll-fade" />
+      </div>
       <TabBar active={activeTab} />
       <Drawer
         open={drawerOpen}

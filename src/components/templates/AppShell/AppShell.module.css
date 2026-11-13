@@ -39,6 +39,21 @@
   to { opacity: 1; transform: translateX(0); }
 }
 
+/* Contenedor del scroll: el degradé "hay más abajo" se posiciona sobre su borde inferior. */
+.body { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.fade {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: var(--fade-h);
+  pointer-events: none;
+  background: linear-gradient(to bottom, transparent, var(--color-bg));
+  opacity: 0;
+  transition: opacity var(--dur-base) linear;
+}
+.fade[data-visible] { opacity: 1; }
+
 /* El contenido es lo único que hace scroll: sin rebote de la página ni "tirar para actualizar". */
 .content {
   flex: 1;
@@ -49,5 +64,6 @@
   -webkit-overflow-scrolling: touch;
   /* Entrada de cada pantalla. `backwards`: al terminar no queda ningún transform activo. */
   animation: enter var(--dur-enter) steps(4) 1 backwards;
-  padding: var(--space-3) max(var(--space-3), var(--safe-right)) var(--space-3) max(var(--space-3), var(--safe-left));
+  /* más aire abajo: el último elemento no queda pegado a la barra ni tapado por el botón Crear */
+  padding: var(--space-3) max(var(--space-3), var(--safe-right)) var(--space-5) max(var(--space-3), var(--safe-left));
 }

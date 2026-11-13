@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { PixelButton, PixelIconButton, PixelPanel, PixelText } from '../../atoms/index.js'
+import TweakSheet from '../TweakSheet/TweakSheet.jsx'
 import { ColorCompare, InfoSheet, MixingAnimation, OptionGroup, RecipeRow, SaveRecipe } from '../../molecules/index.js'
 import { diagnose } from '../../../features/color-mixer/advisor.js'
 import { resultKey, useMixStore } from '../../../features/color-mixer/mixStore.js'
 import { describeQuality, PRECISION } from '../../../features/color-mixer/solver.js'
+import { describeNeeds, describeTweak, isNeutral, shiftTarget } from '../../../features/color-mixer/tweak.js'
 import { ROUTES, navigate } from '../../../features/navigation/useRoute.js'
 import { MAX_SELECTED } from '../../../features/paints/paintsStore.js'
 import { useRecipesStore } from '../../../features/recipes/recipesStore.js'
@@ -42,20 +44,23 @@ export default function MixResult({ target, paints, onAddPaint }) {
   const result = useMixStore((s) => s.result)
   const savedRecipes = useMixStore((s) => s.savedRecipes)
   const extraPaints = useMixStore((s) => s.extraPaints)
-  const { calculate, setMaxParts, selectRecipe, addExtra, removeExtra } = useMixStore.getState()
+  const tweak = useMixStore((s) => s.tweak)
+  const { calculate, setMaxParts, selectRecipe, addExtra, removeExtra, setTweak, resetTweak } = useMixStore.getState()
   const [infoOpen, setInfoOpen] = useState(false)
+  const [tweakOpen, setTweakOpen] = useState(false)
+  const [lastReady, setLastReady] = useState(null) // última receta lista: el panel de ajuste la sigue mostrando mientras recalcula
   const rowsRef = useRef(null)
 
   const allPaints = [...paints, ...extraPaints]
-  const key = resultKey(target, allPaints, maxParts)
+  const key = resultKey(target, allPaints, maxParts, tweak)
   useEffect(() => { calculate({ target, paints: allPaints }) }, [key]) // eslint-disable-line -- `key` resume target, pinturas y maxParts
 
   const current = result?.key === key ? result : null // un resultado de otros datos no se muestra
 
-  // Al sumar una pintura estándar, la lista baja hasta mostrarla completa (con su etiqueta y sus acciones).
+  // Al sumar una pintura estándar, la pantalla se desplaza lo justo para mostrar su fila completa (con etiqueta y acciones).
   useEffect(() => {
     if (current?.status === 'ready' && extraPaints.length > 0) {
-      rowsRef.current?.scrollTo?.({ top: rowsRef.current.scrollHeight })
+      rowsRef.current?.lastElementChild?.scrollIntoView?.({ block: 'nearest' })
     }
   }, [current?.status, extraPaints.length, key]) // eslint-disable-line -- `current` cambia en cada render; `status` y `key` lo resumen
   const retry = () => { useMixStore.setState({ result: null }); calculate({ target, paints: allPaints }) }
@@ -81,6 +86,15 @@ export default function MixResult({ target, paints, onAddPaint }) {
   const precisionId = (PRECISIONS.find((p) => p.parts === maxParts) ?? PRECISIONS[1]).id
   const active = RECIPE_OPTIONS.some((o) => o.id === recipeKey) ? recipeKey : 'recommended'
 
+  const aim = shiftTarget(target, tweak) // color al que apunta el cálculo (el mismo objetivo si no hay ajuste)
+  const readyShown = current?.status === 'ready' && current.data ? (active === 'best' ? current.data.best : current.data.recommended) : null
+  const readySuggestions = readyShown ? current.suggestions : null
+  // Patrón de React para estado derivado: se actualiza durante el render, solo cuando cambia la receta lista.
+  if (readyShown && (lastReady?.shown !== readyShown || lastReady.suggestions !== readySuggestions)) {
+    setLastReady({ shown: readyShown, suggestions: readySuggestions })
+  }
+  const diagnoseFor = (recipe) => diagnose(aim, { mixHex: recipe.mixHex, deltaE: recipe.aimDeltaE ?? recipe.deltaE })
+
   const groups = (
     <>
       <OptionGroup
@@ -96,8 +110,19 @@ export default function MixResult({ target, paints, onAddPaint }) {
         columns={2}
         value={active}
         onChange={selectRecipe}
-        labelAction={<PixelIconButton icon="info" size="sm" hitBias="up" label="Cómo leer tu receta" onClick={() => setInfoOpen(true)} />}
+        labelAction={(
+          <span className={styles.actions}>
+            <PixelButton size="sm" variant="secondary" icon="tune" disabled={!readyShown} onClick={() => setTweakOpen(true)}>Ajustar</PixelButton>
+            <PixelIconButton icon="info" size="sm" hitBias="up" label="Cómo leer tu receta" onClick={() => setInfoOpen(true)} />
+          </span>
+        )}
       />
+      {!isNeutral(tweak) && (
+        <div className={styles.chip}>
+          <PixelText as="span" size="xs">{describeTweak(tweak)}</PixelText>
+          <PixelIconButton icon="cross" size="sm" label="Quitar el ajuste" onClick={resetTweak} />
+        </div>
+      )}
     </>
   )
 
@@ -112,6 +137,26 @@ export default function MixResult({ target, paints, onAddPaint }) {
     </InfoSheet>
   )
 
+  const sheetRecipe = readyShown ?? lastReady?.shown ?? null
+  const sheetSuggestions = (readySuggestions ?? lastReady?.suggestions ?? []).slice(0, 2)
+  const sheetNeeds = sheetRecipe ? describeNeeds(diagnoseFor(sheetRecipe)) : []
+  const tweakSheet = (
+    <TweakSheet
+      open={tweakOpen}
+      onClose={() => setTweakOpen(false)}
+      target={target}
+      shown={sheetRecipe}
+      tweak={tweak}
+      onChange={setTweak}
+      onReset={resetTweak}
+      needs={sheetNeeds}
+      suggestions={sheetSuggestions}
+      onAdd={addExtra}
+      busy={!readyShown}
+      atLimit={atLimit}
+    />
+  )
+
   // La zona del resultado tiene siempre el mismo alto, mientras mezcla y cuando muestra la receta.
   if (!current || current.status === 'mixing') {
     return (
@@ -119,6 +164,7 @@ export default function MixResult({ target, paints, onAddPaint }) {
         {groups}
         <div className={styles.zone}><MixingAnimation colors={allPaints.map((p) => p.hex)} /></div>
         {sheet}
+        {tweakSheet}
       </div>
     )
   }
@@ -132,13 +178,14 @@ export default function MixResult({ target, paints, onAddPaint }) {
           <PixelButton variant="secondary" onClick={retry}>Reintentar</PixelButton>
         </div>
         {sheet}
+        {tweakSheet}
       </div>
     )
   }
 
   const { recommended, best } = current.data
   const shown = active === 'best' ? best : recommended
-  const problems = diagnose(target, shown)
+  const problems = diagnoseFor(shown)
   const suggestions = current.suggestions.slice(0, 2)
   const extraById = new Map(extraPaints.map((p) => [p.id, p]))
 
@@ -202,6 +249,7 @@ export default function MixResult({ target, paints, onAddPaint }) {
 
       <SaveRecipe {...saveProps(saveFor(shown))} />
       {sheet}
+      {tweakSheet}
     </div>
   )
 }
